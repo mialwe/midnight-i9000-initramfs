@@ -53,8 +53,8 @@ fi
   done
   
 # Miscellaneous tweaks
-  echo "6000" > /proc/sys/vm/dirty_writeback_centisecs # Speedmod: 2000
-  echo "6000" > /proc/sys/vm/dirty_expire_centisecs    # Speedmod: 1000
+  echo "3000" > /proc/sys/vm/dirty_writeback_centisecs # Speedmod: 2000
+  echo "3000" > /proc/sys/vm/dirty_expire_centisecs    # Speedmod: 1000
   echo "0" > /proc/sys/vm/swappiness
 
 ################################################################################
@@ -79,6 +79,7 @@ fi
 
 # prop modifications
   setprop debug.sf.hw 1
+  setprop debug.sf.nobootanimation 0
   setprop wifi.supplicant_scan_interval 180
   setprop windowsmgr.max_events_per_sec 180
 
@@ -92,6 +93,7 @@ fi
   sysctl -w kernel.sched_latency_ns=600000
   sysctl -w kernel.sched_min_granularity_ns=400000
   sysctl -w kernel.sched_wakeup_granularity_ns=400000
+  mount -t debugfs none /sys/kernel/debug
   echo NO_NORMALIZED_SLEEPER > /sys/kernel/debug/sched_features
 
 # noop scheduler tweak
