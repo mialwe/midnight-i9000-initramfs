@@ -54,7 +54,7 @@ fi
   
 # Miscellaneous tweaks
   echo "3000" > /proc/sys/vm/dirty_writeback_centisecs # Speedmod: 2000
-  echo "3000" > /proc/sys/vm/dirty_expire_centisecs    # Speedmod: 1000
+  echo "2000" > /proc/sys/vm/dirty_expire_centisecs    # Speedmod: 1000
   echo "0" > /proc/sys/vm/swappiness
 
 ################################################################################
@@ -67,15 +67,15 @@ fi
 
 # /proc/sys/vm
 # nice, short documentation: http://www.linuxinsight.com/proc_sys_vm_hierarchy.html
-  echo "25" > /proc/sys/vm/dirty_ratio
-  echo "15" > /proc/sys/vm/dirty_background_ratio
-  echo "5"  > /proc/sys/vm/laptop_mode
+# echo "25" > /proc/sys/vm/dirty_ratio
+# echo "15" > /proc/sys/vm/dirty_background_ratio
+#  echo "5"  > /proc/sys/vm/laptop_mode
 
 # kill the tasks causing full memory
-  sysctl -w vm.oom_kill_allocating_task=1
+#  sysctl -w vm.oom_kill_allocating_task=1
 
 # more mem to cache fs dentry and inode to save cpu
-  sysctl -w vm.vfs_cache_pressure=10
+#  sysctl -w vm.vfs_cache_pressure=10
 
 # prop modifications
   setprop debug.sf.hw 1
@@ -84,12 +84,12 @@ fi
   setprop windowsmgr.max_events_per_sec 180
 
 # kernel tweaks
-  echo "8" > /proc/sys/vm/page-cluster;
-  echo "10" > /proc/sys/fs/lease-break-time;
-  echo "2048" > /proc/sys/kernel/msgmni
-  echo "64000" > /proc/sys/kernel/msgmax
-  echo "268435456" > /proc/sys/kernel/shmmax
-  echo "500 512000 64 2048" > /proc/sys/kernel/sem
+#  echo "8" > /proc/sys/vm/page-cluster;
+#  echo "10" > /proc/sys/fs/lease-break-time;
+#  echo "2048" > /proc/sys/kernel/msgmni
+#  echo "64000" > /proc/sys/kernel/msgmax
+#  echo "268435456" > /proc/sys/kernel/shmmax
+#  echo "500 512000 64 2048" > /proc/sys/kernel/sem
   sysctl -w kernel.sched_latency_ns=600000
   sysctl -w kernel.sched_min_granularity_ns=400000
   sysctl -w kernel.sched_wakeup_granularity_ns=400000
@@ -97,10 +97,10 @@ fi
   echo NO_NORMALIZED_SLEEPER > /sys/kernel/debug/sched_features
 
 # noop scheduler tweak
-  for i in $(/sbin/busybox_disabled ls -1 /sys/block/stl*) $(/sbin/busybox_disabled ls -1 /sys/block/mmc*)
-  do 
-    echo "248" > $i/queue/nr_requests
-  done
+#  for i in $(/sbin/busybox_disabled ls -1 /sys/block/stl*) $(/sbin/busybox_disabled ls -1 /sys/block/mmc*)
+#  do 
+#    echo "248" > $i/queue/nr_requests
+#  done
 
 # END MIDNIGHT ADDITIONS
 ################################################################################
