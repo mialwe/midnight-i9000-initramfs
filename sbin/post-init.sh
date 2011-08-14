@@ -111,10 +111,7 @@ fi
   bln_bkp="/system/lib/hw/$bln_file.orig"
   if [ -d /sys/class/misc/backlightnotification ]; then
       if [ ! -f $bln_bkp ]; then
-        touch /data/local/bln_no_orig
         /sbin/busybox cp $bln_trg $bln_bkp
-      else
-        touch /data/local/bln_yes_orig
       fi
       /sbin/busybox cp $bln_src $bln_trg
       /sbin/busybox chown 0.0 $bln_trg && /sbin/busybox chmod 644 $bln_trg
