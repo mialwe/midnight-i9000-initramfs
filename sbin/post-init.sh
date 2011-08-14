@@ -11,13 +11,13 @@ exec 2>&1
 ##### Early-init phase #####
 
 # Screen color settings
-if /sbin/busybox [ "`/sbin/busybox grep COLD_COLOR /system/etc/speedmodcolor.conf`" ]; then
-  echo 1 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
-fi
+#if /sbin/busybox [ "`/sbin/busybox grep COLD_COLOR /system/etc/speedmodcolor.conf`" ]; then
+#  echo 1 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
+#fi
 
-if /sbin/busybox [ "`/sbin/busybox grep WARM_COLOR /system/etc/speedmodcolor.conf`" ]; then
-  echo 2 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
-fi
+#if /sbin/busybox [ "`/sbin/busybox grep WARM_COLOR /system/etc/speedmodcolor.conf`" ]; then
+#  echo 2 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
+#fi
 
 # Android Logger enable tweak
 if /sbin/busybox [ "`grep ANDROIDLOGGER /system/etc/tweaks.conf`" ]; then
@@ -102,6 +102,24 @@ fi
 #    echo "248" > $i/queue/nr_requests
 #  done
 
+# Add patched liblights for backlight notification
+  sync
+  /sbin/busybox_disabled  mount -o rw,remount /dev/block/stl9 /system
+  bln_file='lights.s5pc110.so'
+  bln_src="/res/misc/$bln_file"
+  bln_trg="/system/lib/hw/$bln_file"
+  bln_bkp="/system/lib/hw/$bln_file.orig"
+  if [ -d /sys/class/misc/backlightnotification ]; then
+      if [ ! -f $bln_bkp ]; then
+        touch /data/local/bln_no_orig
+        /sbin/busybox cp $bln_trg $bln_bkp
+      else
+        touch /data/local/bln_yes_orig
+      fi
+      /sbin/busybox cp $bln_src $bln_trg
+      /sbin/busybox chown 0.0 $bln_trg && /sbin/busybox chmod 644 $bln_trg
+  fi
+  /sbin/busybox_disabled mount -o ro,remount /dev/block/stl9 /system  
 # END MIDNIGHT ADDITIONS
 ################################################################################
 
