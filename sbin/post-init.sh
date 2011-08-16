@@ -72,7 +72,7 @@ fi
 #  echo "5"  > /proc/sys/vm/laptop_mode
 
 # kill the tasks causing full memory
-#  sysctl -w vm.oom_kill_allocating_task=1
+  sysctl -w vm.oom_kill_allocating_task=1
 
 # more mem to cache fs dentry and inode to save cpu
 #  sysctl -w vm.vfs_cache_pressure=10
@@ -82,19 +82,28 @@ fi
   setprop debug.sf.nobootanimation 0
   setprop wifi.supplicant_scan_interval 180
   setprop windowsmgr.max_events_per_sec 180
-
+  setprop ro.ril.disable.power.collapse 1;
+  setprop ro.telephony.call_ring.delay 1000;
+  setprop mot.proximity.delay 150;
+  setprop ro.mot.eri.losalert.delay=1000;
+  setprop pm.sleep_mode=1;
+  
 # kernel tweaks
-#  echo "8" > /proc/sys/vm/page-cluster;
-#  echo "10" > /proc/sys/fs/lease-break-time;
-#  echo "2048" > /proc/sys/kernel/msgmni
-#  echo "64000" > /proc/sys/kernel/msgmax
-#  echo "268435456" > /proc/sys/kernel/shmmax
-#  echo "500 512000 64 2048" > /proc/sys/kernel/sem
-  sysctl -w kernel.sched_latency_ns=600000
-  sysctl -w kernel.sched_min_granularity_ns=400000
-  sysctl -w kernel.sched_wakeup_granularity_ns=400000
   mount -t debugfs none /sys/kernel/debug
   echo NO_NORMALIZED_SLEEPER > /sys/kernel/debug/sched_features
+  echo "2048" > /proc/sys/kernel/msgmni
+  echo "64000" > /proc/sys/kernel/msgmax
+  echo "268435456" > /proc/sys/kernel/shmmax
+  echo "500 512000 64 2048" > /proc/sys/kernel/sem
+
+# reduce IO overhead
+  for k in $(/sbin/busybox_disabled ls -1 /sys/block/stl*) $(/sbin/busybox_disabled ls -1 /sys/block/mmc*);
+  do
+    echo "0" > $k/queue/iostats
+  done
+# touchscreen tweak
+echo "08000" > /sys/class/touch/switch/set_touchscreen
+echo "13008" > /sys/class/touch/switch/set_touchscreen
 
 # noop scheduler tweak
 #  for i in $(/sbin/busybox_disabled ls -1 /sys/block/stl*) $(/sbin/busybox_disabled ls -1 /sys/block/mmc*)
