@@ -72,8 +72,8 @@ fi
   setprop ro.ril.disable.power.collapse 1;
   setprop ro.telephony.call_ring.delay 1000;
   setprop mot.proximity.delay 150;
-  setprop ro.mot.eri.losalert.delay=1000;
-  setprop pm.sleep_mode=1;
+  setprop ro.mot.eri.losalert.delay 1000;
+  setprop pm.sleep_mode 1;
   
 # kernel tweaks
   mount -t debugfs none /sys/kernel/debug
