@@ -61,10 +61,6 @@ fi
 # MIDNIGHT ADDITIONS
 ##################################
 
-# Midnight: Diasbled as CONSERVATIVE is used. Speedmod: Ondemand CPU governor tweaks
-#  echo "50" > /sys/devices/system/cpu/cpufreq/ondemand/up_threshold
-#  echo "80000" > /sys/devices/system/cpu/cpufreq/ondemand/sampling_rate
-
 # kill the tasks causing full memory
   sysctl -w vm.oom_kill_allocating_task=1
 
