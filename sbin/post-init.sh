@@ -11,11 +11,11 @@ exec 2>&1
 ##### Early-init phase #####
 
 # Screen color settings
-if /sbin/busybox [ "`/sbin/busybox grep COLD_COLOR /system/etc/speedmodcolor.conf`" ]; then
+if /sbin/busybox [ "`grep COLD /system/etc/tweaks.conf`" ]; then
   echo 1 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
 fi
 
-if /sbin/busybox [ "`/sbin/busybox grep WARM_COLOR /system/etc/speedmodcolor.conf`" ]; then
+if /sbin/busybox [ "`grep WARM /system/etc/tweaks.conf`" ]; then
   echo 2 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
 fi
 
@@ -33,9 +33,9 @@ fi
 
 # Enable CIFS tweak
 if /sbin/busybox [ "`grep CIFS /system/etc/tweaks.conf`" ]; then
-  /sbin/busybox insmod /lib/modules/cifs.ko
+  insmod /lib/modules/cifs.ko
 else
-  /sbin/busybox rm /lib/modules/cifs.ko
+  rm /lib/modules/cifs.ko
 fi
 
 # Remount all partitions with noatime
@@ -86,8 +86,8 @@ fi
   done
 
 # touchscreen tweaks
-  echo "08000" > /sys/class/touch/switch/set_touchscreen
-  echo "13008" > /sys/class/touch/switch/set_touchscreen
+#  echo "08000" > /sys/class/touch/switch/set_touchscreen
+#  echo "13008" > /sys/class/touch/switch/set_touchscreen
 
 # Add patched liblights for backlight notification
   sync
