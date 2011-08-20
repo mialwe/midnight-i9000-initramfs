@@ -73,7 +73,7 @@ fi
   setprop ro.telephony.call_ring.delay 1000;
   setprop mot.proximity.delay 150;
   setprop ro.mot.eri.losalert.delay 1000;
-  setprop pm.sleep_mode 1;
+  setprop pm.sleep_mode 0;
   
 # kernel tweaks
   mount -t debugfs none /sys/kernel/debug
@@ -84,10 +84,6 @@ fi
   do
     echo "0" > $k/queue/iostats
   done
-
-# touchscreen tweaks
-#  echo "08000" > /sys/class/touch/switch/set_touchscreen
-#  echo "13008" > /sys/class/touch/switch/set_touchscreen
 
 # Add patched liblights for backlight notification
   sync
@@ -105,12 +101,17 @@ fi
   fi
   /sbin/busybox_disabled mount -o ro,remount /dev/block/stl9 /system  
 
-# END MIDNIGHT ADDITIONS
-############################
-
-# SD cards (mmcblk) read ahead tweaks
+# internal/external sdcard readahead tweak
+if /sbin/busybox [ "`grep READAHEAD /system/etc/tweaks.conf`" ]; then
+  echo "2048" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
+  echo "2048" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
+else
   echo "512" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
   echo "512" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
+fi
+
+# END MIDNIGHT ADDITIONS
+############################
 
 # Onenand (stl) read ahead tweaks
   echo "64" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
