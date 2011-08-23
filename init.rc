@@ -508,7 +508,8 @@ on boot
     setprop ro.HEAVY_WEIGHT_APP_ADJ 2
     setprop ro.SECONDARY_SERVER_ADJ 2
     setprop ro.BACKUP_APP_ADJ 2
-    setprop ro.HOME_APP_ADJ 4
+    setprop ro.HOME_APP_ADJ 0
+#    setprop ro.HOME_APP_ADJ 1
     setprop ro.HIDDEN_APP_MIN_ADJ 7
     setprop ro.CONTENT_PROVIDER_MEM 14
     setprop ro.EMPTY_APP_ADJ 15
@@ -524,13 +525,13 @@ on boot
     setprop ro.HEAVY_WEIGHT_APP_MEM 4096
     setprop ro.SECONDARY_SERVER_MEM 6144
     setprop ro.BACKUP_APP_MEM 6144
-    setprop ro.HOME_APP_MEM 6144
+    setprop ro.HOME_APP_MEM 2560
+#    setprop ro.HOME_APP_MEM 6144
     setprop ro.HIDDEN_APP_MEM 10240
-    setprop ro.CONTENT_PROVIDER_MEM 11264
-    setprop ro.EMPTY_APP_MEM 12288
-#    setprop ro.HIDDEN_APP_MEM 8192
-#    setprop ro.CONTENT_PROVIDER_MEM 9216
-#    setprop ro.EMPTY_APP_MEM 10240
+    setprop ro.CONTENT_PROVIDER_MEM 12288
+#    setprop ro.CONTENT_PROVIDER_MEM 11264
+    setprop ro.EMPTY_APP_MEM 13312
+#    setprop ro.EMPTY_APP_MEM 12288
 
 # Write value must be consistent with the above properties.
 # Note that the driver only supports 6 slots, so we have combined some of
@@ -540,7 +541,8 @@ on boot
 
     write /proc/sys/vm/overcommit_memory 1
     write /proc/sys/vm/min_free_order_shift 4
-    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,10240,11264,12288
+    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,10240,12288,13312
+    # write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,10240,11264,12288
     # write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,8192,9216,10240
 
     # Set init its forked children's oom_adj.
