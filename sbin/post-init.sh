@@ -66,16 +66,17 @@ fi
 
 # prop modifications
   setprop debug.sf.hw 1
-  setprop debug.sf.nobootanimation 0
-  setprop wifi.supplicant_scan_interval 180
-  setprop windowsmgr.max_events_per_sec 180
+  setprop debug.sf.nobootanimation 0;
+  setprop wifi.supplicant_scan_interval 180;
+  setprop windowsmgr.max_events_per_sec 180;
   setprop ro.ril.disable.power.collapse 1;
   setprop ro.telephony.call_ring.delay 1000;
   setprop mot.proximity.delay 150;
   setprop ro.mot.eri.losalert.delay 1000;
-  setprop pm.sleep_mode 0;
+  #setprop ro.HOME_APP_ADJ 1;
+  #setprop pm.sleep_mode 0;
   
-# kernel tweaks
+# kernel tweak
   mount -t debugfs none /sys/kernel/debug
   echo NO_NORMALIZED_SLEEPER > /sys/kernel/debug/sched_features
 
