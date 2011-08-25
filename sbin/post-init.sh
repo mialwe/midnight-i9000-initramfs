@@ -73,7 +73,7 @@ fi
   setprop ro.telephony.call_ring.delay 1000;
   setprop mot.proximity.delay 150;
   setprop ro.mot.eri.losalert.delay 1000;
-  #setprop ro.HOME_APP_ADJ 1;
+  #setprop ro.HOME_APP_ADJ 0;
   #setprop pm.sleep_mode 0;
   
 # kernel tweak
@@ -163,6 +163,29 @@ echo $(date) USER INIT DONE from /system/etc/init.d
 echo $(date) USER INIT START from /data/init.d
 if cd /data/init.d >/dev/null 2>&1 ; then
     for file in S* ; do
+        if ! ls "$file" >/dev/null 2>&1 ; then continue ; fi
+        echo "START '$file'"
+        /system/bin/sh "$file"
+        echo "EXIT '$file' ($?)"
+    done
+fi
+echo $(date) USER INIT DONE from /data/init.d
+
+# Midnight: support <number><number><filename>
+echo $(date) USER INIT START from /system/etc/init.d
+if cd /system/etc/init.d >/dev/null 2>&1 ; then
+    for file in [0-9][0-9]* ; do
+        if ! ls "$file" >/dev/null 2>&1 ; then continue ; fi
+        echo "START '$file'"
+        /system/bin/sh "$file"
+        echo "EXIT '$file' ($?)"
+    done
+fi
+echo $(date) USER INIT DONE from /system/etc/init.d
+
+echo $(date) USER INIT START from /data/init.d
+if cd /data/init.d >/dev/null 2>&1 ; then
+    for file in [0-9][0-9]* ; do
         if ! ls "$file" >/dev/null 2>&1 ; then continue ; fi
         echo "START '$file'"
         /system/bin/sh "$file"
