@@ -527,10 +527,13 @@ on boot
     setprop ro.BACKUP_APP_MEM 6144
     setprop ro.HOME_APP_MEM 2560
 #    setprop ro.HOME_APP_MEM 6144
-    setprop ro.HIDDEN_APP_MEM 10240
-    setprop ro.CONTENT_PROVIDER_MEM 12288
+    setprop ro.HIDDEN_APP_MEM 12288
+#    setprop ro.HIDDEN_APP_MEM 10240
+    setprop ro.CONTENT_PROVIDER_MEM 13312
+#    setprop ro.CONTENT_PROVIDER_MEM 12288
 #    setprop ro.CONTENT_PROVIDER_MEM 11264
-    setprop ro.EMPTY_APP_MEM 13312
+    setprop ro.EMPTY_APP_MEM 15360
+#    setprop ro.EMPTY_APP_MEM 13312
 #    setprop ro.EMPTY_APP_MEM 12288
 
 # Write value must be consistent with the above properties.
@@ -541,7 +544,7 @@ on boot
 
     write /proc/sys/vm/overcommit_memory 1
     write /proc/sys/vm/min_free_order_shift 4
-    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,10240,12288,13312
+    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,12288,13312,15360
     # write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,10240,11264,12288
     # write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,8192,9216,10240
 

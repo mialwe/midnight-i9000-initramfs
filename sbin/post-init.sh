@@ -53,13 +53,16 @@ fi
   done
   
 # Miscellaneous tweaks
-  echo "3000" > /proc/sys/vm/dirty_writeback_centisecs # Speedmod: 2000
-  echo "2000" > /proc/sys/vm/dirty_expire_centisecs    # Speedmod: 1000
   echo "0" > /proc/sys/vm/swappiness
 
 ##################################
 # MIDNIGHT ADDITIONS
 ##################################
+
+  echo "3000" > /proc/sys/vm/dirty_writeback_centisecs # Flush after 30sec.,Speedmod: 2000
+  echo "3000" > /proc/sys/vm/dirty_expire_centisecs    # Pages expire after 30sec.,Speedmod: 1000
+  echo "10" > /proc/sys/vm/dirty_background_ratio      # flush pages later (default 5% active mem)
+  echo "25" > /proc/sys/vm/dirty_ratio                 # process writes pages later (default 20%)  
 
 # kill the tasks causing full memory
   sysctl -w vm.oom_kill_allocating_task=1
@@ -73,8 +76,6 @@ fi
   setprop ro.telephony.call_ring.delay 1000;
   setprop mot.proximity.delay 150;
   setprop ro.mot.eri.losalert.delay 1000;
-  #setprop ro.HOME_APP_ADJ 0;
-  #setprop pm.sleep_mode 0;
   
 # kernel tweak
   mount -t debugfs none /sys/kernel/debug
