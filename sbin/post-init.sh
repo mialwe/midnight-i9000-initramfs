@@ -172,7 +172,7 @@ elif /sbin/busybox [ "`grep CPU_UV_9 /system/etc/$CONFFILE`" ]; then
     echo "0 50 100 125 150" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 elif /sbin/busybox [ "`grep CPU_UV_10 /system/etc/$CONFFILE`" ]; then
     echo "25 50 50 100 125" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_11 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_11$ /system/etc/$CONFFILE`" ]; then
     echo "25 50 75 125 150" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 else
     echo "0 0 0 0 0" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
