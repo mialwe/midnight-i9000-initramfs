@@ -150,29 +150,29 @@ insmod /lib/modules/cpufreq_stats.ko
 
 # Undervolting values
 CONFFILE="midnight_cpu_uv.conf"
-if /sbin/busybox [ "`grep CPU_UV_0 /system/etc/$CONFFILE`" ]; then
+if /sbin/busybox [ "`grep CPU_UV_0$ /system/etc/$CONFFILE`" ]; then
     echo "0 0 0 0 0" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_1 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_1$ /system/etc/$CONFFILE`" ]; then
     echo "0 0 25 25 50" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_2 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_2$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 25 50 50" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_3 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_3$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 25 50 100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_4 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_4$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 50 100 100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_5 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_5$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 75 100 125" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_6 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_6$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 50 100 125" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_7 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_7$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 50 125 125" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_8 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_8$ /system/etc/$CONFFILE`" ]; then
     echo "0 25 100 125 150" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_9 /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_9$ /system/etc/$CONFFILE`" ]; then
     echo "0 50 100 125 150" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 elif /sbin/busybox [ "`grep CPU_UV_10 /system/etc/$CONFFILE`" ]; then
     echo "25 50 50 100 125" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-elif /sbin/busybox [ "`grep CPU_UV_11$ /system/etc/$CONFFILE`" ]; then
+elif /sbin/busybox [ "`grep CPU_UV_11 /system/etc/$CONFFILE`" ]; then
     echo "25 50 75 125 150" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 else
     echo "0 0 0 0 0" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
