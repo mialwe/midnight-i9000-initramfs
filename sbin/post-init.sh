@@ -1,4 +1,5 @@
 #!/sbin/busybox_disabled sh
+echo "Entering initramfs post-init.sh..."
 # Logging
 /sbin/busybox_disabled cp /data/user.log /data/user.log.bak
 /sbin/busybox_disabled rm /data/user.log
@@ -11,6 +12,7 @@ exec 2>&1
 ##### Early-init phase #####
 
 # Screen color settings
+echo "Setting video driver options..."
 CONFFILE="midnight_gfx.conf"
 if /sbin/busybox [ "`grep COLD /system/etc/$CONFFILE`" ]; then
   echo 1 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
@@ -21,6 +23,7 @@ if /sbin/busybox [ "`grep WARM /system/etc/$CONFFILE`" ]; then
 fi
 
 CONFFILE="midnight_misc.conf"
+echo "Setting misc. options..."
 # enable logger (LOGCAT) 
 if /sbin/busybox [ "`grep ANDROIDLOGGER /system/etc/$CONFFILE`" ]; then
   insmod /lib/modules/logger.ko
@@ -40,6 +43,7 @@ else
   rm /lib/modules/cifs.ko
 fi
 
+echo "Remounting partitions with speed tweaks..."
 # remount all partitions with noatime
   for k in $(/sbin/busybox_disabled mount | /sbin/busybox_disabled grep relatime | /sbin/busybox_disabled cut -d " " -f3)
   do
@@ -47,6 +51,7 @@ fi
         /sbin/busybox_disabled mount -o remount,noatime $k
   done
 
+echo "Trying to remount EXT4 partitions with speed tweaks if any..."
 # remount ext4 partitions with optimizations
   for k in $(/sbin/busybox_disabled mount | /sbin/busybox_disabled grep ext4 | /sbin/busybox_disabled cut -d " " -f3)
   do
@@ -57,13 +62,15 @@ fi
 ##################################
 # MIDNIGHT ADDITIONS
 ##################################
+  echo "Setting VM tweaks..."
   echo "0" > /proc/sys/vm/swappiness                   # Not really needed as no /swap used...
   echo "2000" > /proc/sys/vm/dirty_writeback_centisecs # Flush after 20sec. (o:500)
   echo "2000" > /proc/sys/vm/dirty_expire_centisecs    # Pages expire after 20sec. (o:200)
-  echo "15" > /proc/sys/vm/dirty_background_ratio      # flush pages later (default 5% active mem)
-  echo "30" > /proc/sys/vm/dirty_ratio                 # process writes pages later (default 20%)  
+  echo "10" > /proc/sys/vm/dirty_background_ratio      # flush pages later (default 5% active mem)
+  echo "25" > /proc/sys/vm/dirty_ratio                 # process writes pages later (default 20%)  
 
 # prop modifications
+  echo "Setting prop tweaks..."
   setprop debug.sf.hw 1
   setprop debug.sf.nobootanimation 0;
   setprop wifi.supplicant_scan_interval 180;
@@ -74,7 +81,7 @@ fi
   setprop ro.mot.eri.losalert.delay 1000;
   
 # kernel tweak
-echo "Kernel tweak (SLEEPERS and semaphores)..."
+echo "Setting kernel tweak #1 (SLEEPERS)..."
   #mount -t debugfs none /sys/kernel/debug
   echo "NO_NORMALIZED_SLEEPER" > /sys/kernel/debug/sched_features
   echo "NO_NEW_FAIR_SLEEPERS" > /sys/kernel/debug/sched_features
@@ -82,27 +89,32 @@ echo "Kernel tweak (SLEEPERS and semaphores)..."
   echo 500 512000 64 2048 > /proc/sys/kernel/sem; 
 
 # reduce IO overhead
-echo "Reducing IO overhead"
+echo "Reducing IO overhead..."
   for k in $(/sbin/busybox_disabled ls -1 /sys/block/stl*) $(/sbin/busybox_disabled ls -1 /sys/block/mmc*);
   do
     echo "0" > $k/queue/iostats
   done
 
 # Add patched liblights for backlight notification
-echo "Copying liblights for BLN..."
+  echo "BLN..."
   sync
+  echo "BLN: Remounting /system rw..." 
   /sbin/busybox_disabled  mount -o rw,remount /dev/block/stl9 /system
   bln_file='lights.s5pc110.so'
   bln_src="/res/misc/$bln_file"
   bln_trg="/system/lib/hw/$bln_file"
   bln_bkp="/system/lib/hw/$bln_file.orig"
   if [ -d /sys/class/misc/backlightnotification ]; then
+      echo "BLN: Kernel supports backlightnotification"
       if [ ! -f $bln_bkp ]; then
+        echo "BLN: liblights backup not found, copying to /system/lib/hw/liblights.s5pc110.so.orig..." 
         /sbin/busybox cp $bln_trg $bln_bkp
       fi
+      echo "BLN: Copying bln patched liblights from neldar..."
       /sbin/busybox cp $bln_src $bln_trg
       /sbin/busybox chown 0.0 $bln_trg && /sbin/busybox chmod 644 $bln_trg
   fi
+  echo "BLN: Remount /system ro..."
   /sbin/busybox_disabled mount -o ro,remount /dev/block/stl9 /system  
 
 # internal/external sdcard readahead tweak (0:128)
@@ -160,7 +172,7 @@ insmod /lib/modules/cpufreq_stats.ko
 uv100=0; uv200=0; uv400=0; uv800=0; uvmaxmhz=0;
 
 # Undervolting presets
-echo "Setting undervolting presets..."
+echo "UV: Setting undervolting presets..."
 CONFFILE="midnight_cpu_uv.conf"
 if /sbin/busybox [ "`grep CPU_UV_0$ /system/etc/$CONFFILE`" ]; then
      uvmaxmhz=0; uv800=0; uv400=0; uv200=0; uv100=0;
@@ -194,99 +206,94 @@ echo "UV: Values after preset parsing: $uvmaxmhz $uv800 $uv400  $uv200 $uv100"
 # Manual undervolting values
 CONFFILE="midnight_cpu_uv_100.conf"
 uv=0
-if /sbin/busybox [ "`grep _5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
-if /sbin/busybox [ "`grep _10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
-if /sbin/busybox [ "`grep _20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
-if /sbin/busybox [ "`grep _30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
-if /sbin/busybox [ "`grep _40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
-if /sbin/busybox [ "`grep _50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
-if /sbin/busybox [ "`grep _60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
-if /sbin/busybox [ "`grep _70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
-if /sbin/busybox [ "`grep _80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
-if /sbin/busybox [ "`grep _90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
-if /sbin/busybox [ "`grep _100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
-echo "Calculated manual UV mv: $uv"
-echo "Original UV 100Mhz mv: $uv100"
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+echo "UV: Calculated manual UV mv: $uv"
+echo "UV: Original UV 100Mhz mv: $uv100"
 if /sbin/busybox [ "`grep _NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
     echo "UV: Not overriding preset";let uv100=uv100;else let uv100=uv;fi
-echo "MANUAL UV 100Mhz: $uv100 mV"
 
 CONFFILE="midnight_cpu_uv_200.conf"
 uv=0
-if /sbin/busybox [ "`grep _5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
-if /sbin/busybox [ "`grep _10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
-if /sbin/busybox [ "`grep _20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
-if /sbin/busybox [ "`grep _30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
-if /sbin/busybox [ "`grep _40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
-if /sbin/busybox [ "`grep _50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
-if /sbin/busybox [ "`grep _60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
-if /sbin/busybox [ "`grep _70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
-if /sbin/busybox [ "`grep _80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
-if /sbin/busybox [ "`grep _90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
-if /sbin/busybox [ "`grep _100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
-echo "Calculated manual UV 200Mhz mv: $uv"
-echo "Original UV 200Mhz mv: $uv200"
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+echo "UV: Calculated manual UV 200Mhz mv: $uv"
+echo "UV: Original UV 200Mhz mv: $uv200"
 if /sbin/busybox [ "`grep _NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
     echo "UV: Not overriding preset";let uv200=uv200;else let uv200=uv;fi
-echo "MANUAL UV 200Mhz: $uv200 mV"
 
 CONFFILE="midnight_cpu_uv_400.conf"
 uv=0
-if /sbin/busybox [ "`grep _5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
-if /sbin/busybox [ "`grep _10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
-if /sbin/busybox [ "`grep _20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
-if /sbin/busybox [ "`grep _30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
-if /sbin/busybox [ "`grep _40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
-if /sbin/busybox [ "`grep _50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
-if /sbin/busybox [ "`grep _60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
-if /sbin/busybox [ "`grep _70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
-if /sbin/busybox [ "`grep _80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
-if /sbin/busybox [ "`grep _90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
-if /sbin/busybox [ "`grep _100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
-echo "Calculated manual UV 400Mhz mv: $uv"
-echo "Original UV 400Mhz mv: $uv400"
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+echo "UV: Calculated manual UV 400Mhz mv: $uv"
+echo "UV: Original UV 400Mhz mv: $uv400"
 if /sbin/busybox [ "`grep _NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
     echo "UV: Not overriding preset";let uv400=uv400;else let uv400=uv;fi
-echo "MANUAL UV 400Mhz: $uv400 mV"
 
 CONFFILE="midnight_cpu_uv_800.conf"
 uv=0
-if /sbin/busybox [ "`grep _5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
-if /sbin/busybox [ "`grep _10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
-if /sbin/busybox [ "`grep _20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
-if /sbin/busybox [ "`grep _30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
-if /sbin/busybox [ "`grep _40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
-if /sbin/busybox [ "`grep _50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
-if /sbin/busybox [ "`grep _60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
-if /sbin/busybox [ "`grep _70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
-if /sbin/busybox [ "`grep _80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
-if /sbin/busybox [ "`grep _90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
-if /sbin/busybox [ "`grep _100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
-echo "Calculated manual UV 800Mhz mv: $uv"
-echo "Original UV 800Mhz mv: $uv800"
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+echo "UV: Calculated manual UV 800Mhz mv: $uv"
+echo "UV: Original UV 800Mhz mv: $uv800"
 if /sbin/busybox [ "`grep _NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
     echo "UV: Not overriding preset";let uv800=uv800;else let uv800=uv;fi
-echo "MANUAL UV 800Mhz: $uv800 mV"
 
 CONFFILE="midnight_cpu_uv_maxmhz.conf"
 uv=0
-if /sbin/busybox [ "`grep _5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
-if /sbin/busybox [ "`grep _10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
-if /sbin/busybox [ "`grep _20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
-if /sbin/busybox [ "`grep _30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
-if /sbin/busybox [ "`grep _40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
-if /sbin/busybox [ "`grep _50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
-if /sbin/busybox [ "`grep _60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
-if /sbin/busybox [ "`grep _70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
-if /sbin/busybox [ "`grep _80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
-if /sbin/busybox [ "`grep _90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
-if /sbin/busybox [ "`grep _100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
-echo "Calculated manual UV maxMhz mv: $uv"
-echo "Original UV maxMhz mv: $uvmaxmhz"
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+echo "UV: Calculated manual UV maxMhz mv: $uv"
+echo "UV: Original UV maxMhz mv: $uvmaxmhz"
 if /sbin/busybox [ "`grep _NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
     echo "UV: Not overriding preset";let uvmaxmhz=uvmaxmhz;else let uvmaxmhz=uv;fi
-echo "MANUAL UV max. Mhz: $uvmaxmhz mV"
-echo "Setting udervolting values: $uvmaxmhz $uv800 $uv400  $uv200 $uv100 mV"
+echo "UV: Setting undervolting values: $uvmaxmhz $uv800 $uv400 $uv200 $uv100 mV..."
 echo "$uvmaxmhz $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
     
 
@@ -313,6 +320,200 @@ else
     ADJ0=2048;ADJ1=4096;ADJ2=6144;ADJ7=14080;ADJ14=15360;ADJ15=20480;
 fi
 
+# Manual lowmemorykiller values
+CONFFILE="midnight_lmk_slot1.conf"
+lmkval=0
+if /sbin/busybox [ "`grep 1$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
+if /sbin/busybox [ "`grep 2$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
+if /sbin/busybox [ "`grep 3$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+3;fi
+if /sbin/busybox [ "`grep 4$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+4;fi
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+5;fi
+if /sbin/busybox [ "`grep 6$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+6;fi
+if /sbin/busybox [ "`grep 7$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+7;fi
+if /sbin/busybox [ "`grep 8$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+8;fi
+if /sbin/busybox [ "`grep 9$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+9;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+100;fi
+echo "LMK: Manual lmk slot1 Mb: $lmkval"
+lmkval=$(($lmkval*1000/4*1024/1000))
+echo "LMK: Calculated manual lmk slot1: $lmkval"
+echo "LMK: Original lmk slot1: $ADJ0"
+if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+    echo "LMK: Not overriding preset";
+else 
+    echo "LMK: Overriding preset"
+    let ADJ0=$lmkval;
+fi
+
+CONFFILE="midnight_lmk_slot2.conf"
+lmkval=0
+if /sbin/busybox [ "`grep 1$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
+if /sbin/busybox [ "`grep 2$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
+if /sbin/busybox [ "`grep 3$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+3;fi
+if /sbin/busybox [ "`grep 4$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+4;fi
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+5;fi
+if /sbin/busybox [ "`grep 6$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+6;fi
+if /sbin/busybox [ "`grep 7$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+7;fi
+if /sbin/busybox [ "`grep 8$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+8;fi
+if /sbin/busybox [ "`grep 9$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+9;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+100;fi
+echo "LMK: Manual lmk slot2 Mb: $lmkval"
+lmkval=$(($lmkval*1000/4*1024/1000))
+echo "LMK: Calculated manual lmk slot2: $lmkval"
+echo "LMK: Original lmk slot2: $ADJ1"
+if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+    echo "LMK: Not overriding preset";
+else 
+    echo "LMK: Overriding preset"
+    let ADJ1=$lmkval;
+fi
+
+CONFFILE="midnight_lmk_slot3.conf"
+lmkval=0
+if /sbin/busybox [ "`grep 1$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
+if /sbin/busybox [ "`grep 2$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
+if /sbin/busybox [ "`grep 3$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+3;fi
+if /sbin/busybox [ "`grep 4$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+4;fi
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+5;fi
+if /sbin/busybox [ "`grep 6$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+6;fi
+if /sbin/busybox [ "`grep 7$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+7;fi
+if /sbin/busybox [ "`grep 8$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+8;fi
+if /sbin/busybox [ "`grep 9$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+9;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+100;fi
+echo "LMK: Manual lmk slot3 Mb: $lmkval"
+lmkval=$(($lmkval*1000/4*1024/1000))
+echo "LMK: Calculated manual lmk slot3: $lmkval"
+echo "LMK: Original lmk slot3: $ADJ2"
+if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+    echo "LMK: Not overriding preset";
+else 
+    echo "LMK: Overriding preset"
+    let ADJ2=$lmkval;
+fi
+
+CONFFILE="midnight_lmk_slot4.conf"
+lmkval=0
+if /sbin/busybox [ "`grep 1$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
+if /sbin/busybox [ "`grep 2$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
+if /sbin/busybox [ "`grep 3$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+3;fi
+if /sbin/busybox [ "`grep 4$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+4;fi
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+5;fi
+if /sbin/busybox [ "`grep 6$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+6;fi
+if /sbin/busybox [ "`grep 7$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+7;fi
+if /sbin/busybox [ "`grep 8$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+8;fi
+if /sbin/busybox [ "`grep 9$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+9;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+100;fi
+echo "LMK: Manual lmk slot4 Mb: $lmkval"
+lmkval=$(($lmkval*1000/4*1024/1000))
+echo "LMK: Calculated manual lmk slot4: $lmkval"
+echo "LMK: Original lmk slot4: $ADJ7"
+if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+    echo "LMK: Not overriding preset";
+else 
+    echo "LMK: Overriding preset"
+    let ADJ7=$lmkval;
+fi
+    
+CONFFILE="midnight_lmk_slot5.conf"
+lmkval=0
+if /sbin/busybox [ "`grep 1$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
+if /sbin/busybox [ "`grep 2$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
+if /sbin/busybox [ "`grep 3$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+3;fi
+if /sbin/busybox [ "`grep 4$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+4;fi
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+5;fi
+if /sbin/busybox [ "`grep 6$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+6;fi
+if /sbin/busybox [ "`grep 7$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+7;fi
+if /sbin/busybox [ "`grep 8$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+8;fi
+if /sbin/busybox [ "`grep 9$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+9;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+100;fi
+echo "LMK: Manual lmk slot5 Mb: $lmkval"
+lmkval=$(($lmkval*1000/4*1024/1000))
+echo "LMK: Calculated manual lmk slot5: $lmkval"
+echo "LMK: Original lmk slot5: $ADJ14"
+if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+    echo "LMK: Not overriding preset";
+else 
+    echo "LMK: Overriding preset"
+    let ADJ14=$lmkval;
+fi
+
+CONFFILE="midnight_lmk_slot6.conf"
+lmkval=0
+if /sbin/busybox [ "`grep 1$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
+if /sbin/busybox [ "`grep 2$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
+if /sbin/busybox [ "`grep 3$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+3;fi
+if /sbin/busybox [ "`grep 4$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+4;fi
+if /sbin/busybox [ "`grep 5$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+5;fi
+if /sbin/busybox [ "`grep 6$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+6;fi
+if /sbin/busybox [ "`grep 7$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+7;fi
+if /sbin/busybox [ "`grep 8$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+8;fi
+if /sbin/busybox [ "`grep 9$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+9;fi
+if /sbin/busybox [ "`grep 10$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+10;fi
+if /sbin/busybox [ "`grep 20$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+20;fi
+if /sbin/busybox [ "`grep 30$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+30;fi
+if /sbin/busybox [ "`grep 40$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+40;fi
+if /sbin/busybox [ "`grep 50$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+50;fi
+if /sbin/busybox [ "`grep 60$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+60;fi
+if /sbin/busybox [ "`grep 70$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+70;fi
+if /sbin/busybox [ "`grep 80$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+80;fi
+if /sbin/busybox [ "`grep 90$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+90;fi
+if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+100;fi
+echo "LMK: Manual lmk slot6 Mb: $lmkval"
+lmkval=$(($lmkval*1000/4*1024/1000))
+echo "LMK: Calculated manual lmk slot6: $lmkval"
+echo "LMK: Original lmk slot1: $ADJ15"
+if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+    echo "LMK: Not overriding preset";
+else 
+    echo "LMK: Overriding preset"
+    let ADJ15=$lmkval;
+fi
+
+echo "LMK: Setting APP ADJs..."
 setprop ro.FOREGROUND_APP_MEM "$ADJ0"
 setprop ro.HOME_APP_MEM "$ADJ0"
 setprop ro.VISIBLE_APP_MEM "$ADJ1"
@@ -324,11 +525,11 @@ setprop ro.HIDDEN_APP_MEM "$ADJ7"
 setprop ro.CONTENT_PROVIDER_MEM "$ADJ14"
 setprop ro.EMPTY_APP_MEM "$ADJ15"
 
-  
+echo "LMK: Setting minfree values..."  
 echo "$ADJ0,$ADJ1,$ADJ2,$ADJ7,$ADJ14,$ADJ15" > /sys/module/lowmemorykiller/parameters/minfree
 
 # Touchscreen sensitivity
-echo "Touchscreen tweaks"
+echo "Setting touchscreen tweaks..."
 CONFFILE="midnight_touch.conf"
 if /sbin/busybox [ "`grep TOUCH_PLUS1 /system/etc/$CONFFILE`" ]; then
     echo "07035" > /sys/class/touch/switch/set_touchscreen # sensitivity orig:tchthr 40
@@ -347,15 +548,14 @@ elif /sbin/busybox [ "`grep TOUCH_PLUS3 /system/etc/$CONFFILE`" ]; then
     echo "13010" > /sys/class/touch/switch/set_touchscreen # motion filter
 fi
 
-echo "Setting kernel scheduler tweaks..."
-# IBM http://publib.boulder.ibm.com/infocenter/lnxinfo/v3r0m0/index.jsp?topic=%2Fliaai%2Fsaptuning%2Fsaptuningadjust.htm
-# Thanks to pikacu01 and zach: http://forum.xda-developers.com/showthread.php?t=1266715 for better values
+echo "Setting kernel tweaks #2"
+# Thanks pikachu01 and zach for better values: http://forum.xda-developers.com/showthread.php?t=1266715
 echo 100000 > /proc/sys/kernel/sched_latency_ns
 echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
 echo 750000 > /proc/sys/kernel/sched_min_granularity_ns
     
 # IO scheduler 
-echo "IO scheduler tweak..."
+echo "Setting IO scheduler tweak..."
 CONFFILE="midnight_io_sched.conf"
 if /sbin/busybox [ "`grep IO_SCHED_NOOP /system/etc/$CONFFILE`" ]; then
     SCHEDULER="noop"
@@ -374,7 +574,7 @@ for i in $(ls -1 /sys/block/stl*) $(ls -1 /sys/block/mmc*) $(ls -1 /sys/block/bm
 ############################
 
 # Onenand (stl) read ahead tweaks
-echo "Onenand tweaks..."
+echo "Setting onenand tweaks..."
   echo "64" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
   echo "64" > /sys/devices/virtual/bdi/138:10/read_ahead_kb
   echo "64" > /sys/devices/virtual/bdi/138:11/read_ahead_kb
@@ -452,9 +652,11 @@ if /sbin/busybox [ "`grep INIT_D /system/etc/$CONFFILE`" ]; then
     fi
     echo $(date) USER INIT DONE from /data/init.d
     # end Midnight <n><n><filename> support
+else
+    echo "Init.d support disabled..."
 fi
 
 # Cleanup busybox
-echo "Cleaning busybox"
+echo "Cleaning busybox..."
   /sbin/busybox_disabled rm /sbin/busybox
   /sbin/busybox_disabled mount rootfs -o remount,ro
