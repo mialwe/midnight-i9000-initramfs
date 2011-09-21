@@ -60,8 +60,8 @@ fi
   echo "0" > /proc/sys/vm/swappiness                   # Not really needed as no /swap used...
   echo "2000" > /proc/sys/vm/dirty_writeback_centisecs # Flush after 20sec. (o:500)
   echo "2000" > /proc/sys/vm/dirty_expire_centisecs    # Pages expire after 20sec. (o:200)
-  echo "10" > /proc/sys/vm/dirty_background_ratio      # flush pages later (default 5% active mem)
-  echo "25" > /proc/sys/vm/dirty_ratio                 # process writes pages later (default 20%)  
+  echo "15" > /proc/sys/vm/dirty_background_ratio      # flush pages later (default 5% active mem)
+  echo "30" > /proc/sys/vm/dirty_ratio                 # process writes pages later (default 20%)  
 
 # prop modifications
   setprop debug.sf.hw 1
@@ -74,7 +74,7 @@ fi
   setprop ro.mot.eri.losalert.delay 1000;
   
 # kernel tweak
-echo "Kernel tweak #1"
+echo "Kernel tweak (SLEEPERS and semaphores)..."
   #mount -t debugfs none /sys/kernel/debug
   echo "NO_NORMALIZED_SLEEPER" > /sys/kernel/debug/sched_features
   echo "NO_NEW_FAIR_SLEEPERS" > /sys/kernel/debug/sched_features
@@ -89,7 +89,7 @@ echo "Reducing IO overhead"
   done
 
 # Add patched liblights for backlight notification
-echo "Copying liblights for BLN"
+echo "Copying liblights for BLN..."
   sync
   /sbin/busybox_disabled  mount -o rw,remount /dev/block/stl9 /system
   bln_file='lights.s5pc110.so'
@@ -106,7 +106,7 @@ echo "Copying liblights for BLN"
   /sbin/busybox_disabled mount -o ro,remount /dev/block/stl9 /system  
 
 # internal/external sdcard readahead tweak (0:128)
-echo "Setting READ_AHEAD"
+echo "Setting READ_AHEAD..."
 CONFFILE="midnight_rh.conf"
 if /sbin/busybox [ "`grep READAHEAD_4096 /system/etc/$CONFFILE`" ]; then
   echo "4096" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
@@ -129,7 +129,7 @@ else
 fi
 
 # CPU governor
-echo "Setting CPU governor"
+echo "Setting CPU governor..."
 CONFFILE="midnight_cpu_gov.conf"
 if /sbin/busybox [ "`grep ONDEMAND /system/etc/$CONFFILE`" ]; then
   echo "ondemand" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
@@ -141,7 +141,7 @@ fi
 
 
 # Max. CPU frequency
-echo "Setting CPU max freq"
+echo "Setting CPU max freq..."
 CONFFILE="midnight_cpu_max.conf"
 rmmod cpufreq_stats
 if /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
@@ -347,16 +347,15 @@ elif /sbin/busybox [ "`grep TOUCH_PLUS3 /system/etc/$CONFFILE`" ]; then
     echo "13010" > /sys/class/touch/switch/set_touchscreen # motion filter
 fi
 
-echo "Set kernel tweaks #2"
-#echo "18000000" > /proc/sys/kernel/sched_latency_ns        # orig: 10000000 
-#echo "3000000" > /proc/sys/kernel/sched_wakeup_granularity_ns # orig: 2000000  
-#echo "1500000" > /proc/sys/kernel/sched_min_granularity_ns # orig: 2000000
+echo "Setting kernel scheduler tweaks..."
+# IBM http://publib.boulder.ibm.com/infocenter/lnxinfo/v3r0m0/index.jsp?topic=%2Fliaai%2Fsaptuning%2Fsaptuningadjust.htm
+# Thanks to pikacu01 and zach: http://forum.xda-developers.com/showthread.php?t=1266715 for better values
 echo 100000 > /proc/sys/kernel/sched_latency_ns
 echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
 echo 750000 > /proc/sys/kernel/sched_min_granularity_ns
     
 # IO scheduler 
-echo "IO scheduler tweak"
+echo "IO scheduler tweak..."
 CONFFILE="midnight_io_sched.conf"
 if /sbin/busybox [ "`grep IO_SCHED_NOOP /system/etc/$CONFFILE`" ]; then
     SCHEDULER="noop"
@@ -375,7 +374,7 @@ for i in $(ls -1 /sys/block/stl*) $(ls -1 /sys/block/mmc*) $(ls -1 /sys/block/bm
 ############################
 
 # Onenand (stl) read ahead tweaks
-echo "Onenand tweaks"
+echo "Onenand tweaks..."
   echo "64" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
   echo "64" > /sys/devices/virtual/bdi/138:10/read_ahead_kb
   echo "64" > /sys/devices/virtual/bdi/138:11/read_ahead_kb
