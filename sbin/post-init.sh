@@ -130,6 +130,8 @@ echo "Reducing IO overhead..."
 
 # internal/external sdcard readahead tweak (0:128)
 echo "Setting READ_AHEAD..."
+echo "512" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
+echo "512" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
 CONFFILE="midnight_rh.conf"
 if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep READAHEAD_4096 /system/etc/$CONFFILE`" ]; then
@@ -323,7 +325,6 @@ if [ -f /system/etc/$CONFFILE ];then
     echo "UV: Setting undervolting values: $uvmaxmhz $uv800 $uv400 $uv200 $uv100 mV..."
 fi    
 echo "$uvmaxmhz $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-
 
 # Lowmemorykiller/ADJ settings (o:2560,4096,6144,10240,11264,12288)
 echo "LMK tweaks"
@@ -553,7 +554,7 @@ if [ -f /system/etc/$CONFFILE ];then
         let ADJ15=$lmkval;
     fi
 fi
-
+echo "LMK: Calculated values: $ADJ0,$ADJ1,$ADJ2,$ADJ7,$ADJ14,$ADJ15"
 echo "LMK: Setting APP ADJs..."
 setprop ro.FOREGROUND_APP_MEM "$ADJ0"
 setprop ro.HOME_APP_MEM "$ADJ0"
@@ -709,4 +710,35 @@ fi
 echo "Cleaning busybox..."
   /sbin/busybox_disabled rm /sbin/busybox
   /sbin/busybox_disabled mount rootfs -o remount,ro
+
+echo
+echo "RECHECKING VALUE SETUP"
+echo
+echo -n "GFX: ";cat /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
+echo
+echo "READ_AHEAD:"
+cat /sys/devices/virtual/bdi/179:0/read_ahead_kb
+cat /sys/devices/virtual/bdi/179:8/read_ahead_kb
+echo
+echo -n "CPU governor: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo
+echo -n "CPU max frequency: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+echo ""
+echo -n "CPU UV: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+echo 
+echo -n "LMK: FOREGROUND_APP_MEM: ";getprop ro.FOREGROUND_APP_MEM
+echo -n "LMK: HOME_APP_MEM: ";getprop ro.HOME_APP_MEM
+echo -n "LMK: VISIBLE_APP_MEM: ";getprop ro.VISIBLE_APP_MEM
+echo -n "LMK: PERCEPTIBLE_APP_MEM: ";getprop ro.PERCEPTIBLE_APP_MEM
+echo -n "LMK: HEAVY_WEIGHT_APP_MEM: ";getprop ro.HEAVY_WEIGHT_APP_MEM
+echo -n "LMK: SECONDARY_SERVER_MEM: ";getprop ro.SECONDARY_SERVER_MEM
+echo -n "LMK: BACKUP_APP_MEM: ";getprop ro.BACKUP_APP_MEM
+echo -n "LMK: HIDDEN_APP_MEM: ";getprop ro.HIDDEN_APP_MEM
+echo -n "LMK: CONTENT_PROVIDER_MEM: ";getprop ro.CONTENT_PROVIDER_MEM
+echo -n "LMK: EMPTY_APP_MEM: ";getprop ro.EMPTY_APP_MEM
+echo -n "LMK: /sys/module/lowmemorykiller/parameters/minfree: ";cat /sys/module/lowmemorykiller/parameters/minfree
+echo
+echo "Scheduler"
+for i in $(ls -1 /sys/block/stl*) $(ls -1 /sys/block/mmc*) $(ls -1 /sys/block/bml*) $(ls -1 /sys/block/tfsr*); do cat $i/queue/scheduler;done;
+echo  
 echo "Ok, lets start Android... bye."
