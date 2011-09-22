@@ -349,8 +349,8 @@ if [ -f /system/etc/$CONFFILE ];then
 fi
 
 # Manual lowmemorykiller values
+CONFFILE="midnight_lmk_slot1.conf"
 if [ -f /system/etc/$CONFFILE ];then
-    CONFFILE="midnight_lmk_slot1.conf"
     lmkval=0
     if /sbin/busybox [ "`grep 001$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+1;fi
     if /sbin/busybox [ "`grep 002$ /system/etc/$CONFFILE`" ]; then let lmkval=lmkval+2;fi
