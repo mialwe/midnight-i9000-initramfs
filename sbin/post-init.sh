@@ -182,8 +182,8 @@ if [ -f /system/etc/$CONFFILE ];then
       echo "400000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
     fi
     sleep 1
-    insmod /lib/modules/cpufreq_stats.ko
 fi
+insmod /lib/modules/cpufreq_stats.ko
 
 uv100=0; uv200=0; uv400=0; uv800=0; uvmaxmhz=0;
 # Undervolting presets
@@ -320,8 +320,8 @@ if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
         echo "UV: Not overriding preset";let uvmaxmhz=uvmaxmhz;else let uvmaxmhz=uv;fi
     echo "UV: Setting undervolting values: $uvmaxmhz $uv800 $uv400 $uv200 $uv100 mV..."
-    echo "$uvmaxmhz $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 fi    
+echo "$uvmaxmhz $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 
 
 # Lowmemorykiller/ADJ settings (o:2560,4096,6144,10240,11264,12288)
