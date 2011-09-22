@@ -169,8 +169,9 @@ fi
 # Max. CPU frequency
 echo "Setting CPU max freq..."
 CONFFILE="midnight_cpu_max.conf"
+rmmod cpufreq_stats
+echo "1000000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 if [ -f /system/etc/$CONFFILE ];then
-    rmmod cpufreq_stats
     if /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
       echo 1 > /sys/devices/virtual/misc/midnight_cpufreq/oc1200
       echo "1200000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -181,8 +182,8 @@ if [ -f /system/etc/$CONFFILE ];then
     elif /sbin/busybox [ "`grep MAX_400 /system/etc/$CONFFILE`" ]; then
       echo "400000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
     fi
-    sleep 1
 fi
+sleep 1
 insmod /lib/modules/cpufreq_stats.ko
 
 uv100=0; uv200=0; uv400=0; uv800=0; uvmaxmhz=0;
