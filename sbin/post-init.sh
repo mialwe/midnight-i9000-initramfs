@@ -171,7 +171,7 @@ fi
 # Max. CPU frequency
 echo "Setting CPU max freq..."
 CONFFILE="midnight_cpu_max.conf"
-rmmod cpufreq_stats
+#rmmod cpufreq_stats
 echo "1000000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
@@ -613,6 +613,7 @@ if [ -f /system/etc/$CONFFILE ];then
     fi
 fi
 echo "Applying IO scheduler settings";
+echo "4x '-1...' is ok here..."
 for i in $(ls -1 /sys/block/stl*) $(ls -1 /sys/block/mmc*) $(ls -1 /sys/block/bml*) $(ls -1 /sys/block/tfsr*); do echo $SCHEDULER > $i/queue/scheduler;done;
 
 
@@ -713,19 +714,14 @@ echo "Cleaning busybox..."
 
 echo
 echo "RECHECKING VALUE SETUP"
-echo
 echo -n "GFX: ";cat /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
-echo
+echo -n "BLN: ";ls -l /system/lib/hw/lights*
 echo "READ_AHEAD:"
 cat /sys/devices/virtual/bdi/179:0/read_ahead_kb
 cat /sys/devices/virtual/bdi/179:8/read_ahead_kb
-echo
 echo -n "CPU governor: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
-echo
 echo -n "CPU max frequency: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-echo ""
 echo -n "CPU UV: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
-echo 
 echo -n "LMK: FOREGROUND_APP_MEM: ";getprop ro.FOREGROUND_APP_MEM
 echo -n "LMK: HOME_APP_MEM: ";getprop ro.HOME_APP_MEM
 echo -n "LMK: VISIBLE_APP_MEM: ";getprop ro.VISIBLE_APP_MEM
@@ -737,8 +733,24 @@ echo -n "LMK: HIDDEN_APP_MEM: ";getprop ro.HIDDEN_APP_MEM
 echo -n "LMK: CONTENT_PROVIDER_MEM: ";getprop ro.CONTENT_PROVIDER_MEM
 echo -n "LMK: EMPTY_APP_MEM: ";getprop ro.EMPTY_APP_MEM
 echo -n "LMK: /sys/module/lowmemorykiller/parameters/minfree: ";cat /sys/module/lowmemorykiller/parameters/minfree
-echo
 echo "Scheduler"
+echo "4x '-1...' is ok here..."
 for i in $(ls -1 /sys/block/stl*) $(ls -1 /sys/block/mmc*) $(ls -1 /sys/block/bml*) $(ls -1 /sys/block/tfsr*); do cat $i/queue/scheduler;done;
-echo  
+echo "Kernel tunables"
+echo -n "sched_latency_ns: ";cat /proc/sys/kernel/sched_latency_ns
+echo -n "sched_wakeup_granularity_ns: "; cat /proc/sys/kernel/sched_wakeup_granularity_ns
+echo -n "sched_min_granularity_ns: ";cat /proc/sys/kernel/sched_min_granularity_ns
+echo -n "sleepers: ";cat /sys/kernel/debug/sched_features
+echo -n "semaphores: ";cat /proc/sys/kernel/sem
+echo "VM"
+echo -n "/proc/sys/swappiness :";cat /proc/sys/vm/swappiness                   
+echo -n "dirty_writeback_centisecs :";cat /proc/sys/vm/dirty_writeback_centisecs
+echo -n "dirty_expire_centisecs: ";cat /proc/sys/vm/dirty_expire_centisecs    
+echo -n "proc/sys/vm/dirty_background_ratio: ";cat /proc/sys/vm/dirty_background_ratio
+echo -n "/proc/sys/vm/dirty_ratio :";cat /proc/sys/vm/dirty_ratio                 
+echo "Mounts"
+mount|grep /system
+mount|grep /data
+mount|grep /dbdata
+mount|grep /cache
 echo "Ok, lets start Android... bye."
