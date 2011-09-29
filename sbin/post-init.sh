@@ -36,21 +36,32 @@ echo "Setting misc. options..."
 if [ -f /system/etc/$CONFFILE ];then
     # enable logger (LOGCAT) 
     if /sbin/busybox [ "`grep ANDROIDLOGGER /system/etc/$CONFFILE`" ]; then
+      echo "MODULE: loading logger.ko..."
       insmod /lib/modules/logger.ko
     else
       rm /lib/modules/logger.ko
     fi
 
-    # enable IPv6 privacy
-    if /sbin/busybox [ "`grep IPV6PRIVACY /system/etc/$CONFFILE`" ]; then
-      echo "2" > /proc/sys/net/ipv6/conf/all/use_tempaddr
-    fi
-
     # enable CIFS module loading 
     if /sbin/busybox [ "`grep CIFS /system/etc/$CONFFILE`" ]; then
+      echo "MODULE: loading cifs.ko..."
       insmod /lib/modules/cifs.ko
     else
       rm /lib/modules/cifs.ko
+    fi
+    
+    # enable TUN module loading 
+    if /sbin/busybox [ "`grep TUN /system/etc/$CONFFILE`" ]; then
+      echo "MODULE: loading tun.ko..."
+      insmod /lib/modules/tun.ko
+    else
+      rm /lib/modules/tun.ko
+    fi
+
+    # enable IPv6 privacy
+    if /sbin/busybox [ "`grep IPV6PRIVACY /system/etc/$CONFFILE`" ]; then
+      echo "IPv6: setting use_tempaddr = 2 ..."
+      echo "2" > /proc/sys/net/ipv6/conf/all/use_tempaddr
     fi
 fi
 
@@ -156,26 +167,100 @@ if [ -f /system/etc/$CONFFILE ];then
 fi
 
 # CPU governor
-echo "Setting CPU governor..."
+echo "CPU: Setting CPU governor..."
 CONFFILE="midnight_cpu_gov.conf"
 if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep ONDEMAND /system/etc/$CONFFILE`" ]; then
       echo "ondemand" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+        CONFFILE2="midnight_cpu_gov_ond_up.conf" 
+        govstep=0;stepup=85;
+        if [ -f /system/etc/$CONFFILE2 ];then
+            if /sbin/busybox [ "`grep 005$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+5;fi
+            if /sbin/busybox [ "`grep 010$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+10;fi
+            if /sbin/busybox [ "`grep 020$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+20;fi
+            if /sbin/busybox [ "`grep 030$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+30;fi
+            if /sbin/busybox [ "`grep 040$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+40;fi
+            if /sbin/busybox [ "`grep 050$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+50;fi
+            if /sbin/busybox [ "`grep 060$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+60;fi
+            if /sbin/busybox [ "`grep 070$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+70;fi
+            if /sbin/busybox [ "`grep 080$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+80;fi
+            if /sbin/busybox [ "`grep 090$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+90;fi
+            if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+100;fi
+            echo "CPU: [ondemand] Calculated manual UP_THRESHOLD: $govstep"
+            if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE2`" ]; then 
+                echo "CPU: [ondemand] Not overriding preset";let stepup=stepup;else let stepup=govstep;fi
+            echo "$stepup" > /sys/devices/system/cpu/cpu0/cpufreq/ondemand/up_threshold
+        fi
     elif /sbin/busybox [ "`grep CONSERVATIVE /system/etc/$CONFFILE`" ]; then
-      echo "conservative" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+        echo "conservative" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+        CONFFILE2="midnight_cpu_gov_cons_up.conf"
+        govstep=0;stepup=60;stepdown=45;
+        if [ -f /system/etc/$CONFFILE2 ];then
+            if /sbin/busybox [ "`grep 001$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+1;fi
+            if /sbin/busybox [ "`grep 002$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+2;fi
+            if /sbin/busybox [ "`grep 003$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+3;fi
+            if /sbin/busybox [ "`grep 004$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+4;fi
+            if /sbin/busybox [ "`grep 005$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+5;fi
+            if /sbin/busybox [ "`grep 006$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+6;fi
+            if /sbin/busybox [ "`grep 007$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+7;fi
+            if /sbin/busybox [ "`grep 008$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+8;fi
+            if /sbin/busybox [ "`grep 009$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+9;fi
+            if /sbin/busybox [ "`grep 010$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+10;fi
+            if /sbin/busybox [ "`grep 020$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+20;fi
+            if /sbin/busybox [ "`grep 030$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+30;fi
+            if /sbin/busybox [ "`grep 040$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+40;fi
+            if /sbin/busybox [ "`grep 050$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+50;fi
+            if /sbin/busybox [ "`grep 060$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+60;fi
+            if /sbin/busybox [ "`grep 070$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+70;fi
+            if /sbin/busybox [ "`grep 080$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+80;fi
+            if /sbin/busybox [ "`grep 090$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+90;fi
+            if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+100;fi
+            echo "CPU: [conservative] Calculated manual UP_THRESHOLD: $govstep"
+            if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE2`" ]; then 
+                echo "CPU: [conservative] Not overriding preset";let stepup=stepup;else let stepup=govstep;fi
+            echo "$stepup" > /sys/devices/system/cpu/cpu0/cpufreq/conservative/up_threshold
+        fi
+        govstep=0;
+        CONFFILE2="midnight_cpu_gov_cons_down.conf"
+        if [ -f /system/etc/$CONFFILE2 ];then
+            if /sbin/busybox [ "`grep 001$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+1;fi
+            if /sbin/busybox [ "`grep 002$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+2;fi
+            if /sbin/busybox [ "`grep 003$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+3;fi
+            if /sbin/busybox [ "`grep 004$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+4;fi
+            if /sbin/busybox [ "`grep 005$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+5;fi
+            if /sbin/busybox [ "`grep 006$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+6;fi
+            if /sbin/busybox [ "`grep 007$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+7;fi
+            if /sbin/busybox [ "`grep 008$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+8;fi
+            if /sbin/busybox [ "`grep 009$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+9;fi
+            if /sbin/busybox [ "`grep 010$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+10;fi
+            if /sbin/busybox [ "`grep 020$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+20;fi
+            if /sbin/busybox [ "`grep 030$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+30;fi
+            if /sbin/busybox [ "`grep 040$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+40;fi
+            if /sbin/busybox [ "`grep 050$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+50;fi
+            if /sbin/busybox [ "`grep 060$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+60;fi
+            if /sbin/busybox [ "`grep 070$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+70;fi
+            if /sbin/busybox [ "`grep 080$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+80;fi
+            if /sbin/busybox [ "`grep 090$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+90;fi
+            if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE2`" ]; then let govstep=govstep+100;fi
+            echo "CPU: [conservative] Calculated manual DOWN_THRESHOLD: $govstep"
+            if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE2`" ]; then 
+                echo "CPU: [conservative] Not overriding preset";let stepdown=stepdown;else let stepdown=govstep;fi
+            echo "$stepdown" > /sys/devices/system/cpu/cpu0/cpufreq/conservative/down_threshold
+        fi
     else
       echo "conservative" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
     fi
 fi
 
 # Max. CPU frequency
+# old: echo 1 > /sys/devices/virtual/misc/midnight_cpufreq/oc1200
 echo "Setting CPU max freq..."
 CONFFILE="midnight_cpu_max.conf"
-#rmmod cpufreq_stats
 echo "1000000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 if [ -f /system/etc/$CONFFILE ];then
-    if /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
-      echo 1 > /sys/devices/virtual/misc/midnight_cpufreq/oc1200
+    if /sbin/busybox [ "`grep MAX_1300 /system/etc/$CONFFILE`" ]; then
+      echo "1300000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
+    elif /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
       echo "1200000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
     elif /sbin/busybox [ "`grep MAX_1000 /system/etc/$CONFFILE`" ]; then
       echo "1000000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -188,40 +273,44 @@ fi
 sleep 1
 insmod /lib/modules/cpufreq_stats.ko
 
-uv100=0; uv200=0; uv400=0; uv800=0; uvmaxmhz=0;
+uv100=0; uv200=0; uv400=0; uv800=0; uv1000=0; uv1200=0; uv1300=0;
 # Undervolting presets
 echo "UV: Setting undervolting presets..."
 CONFFILE="midnight_cpu_uv.conf"
 if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep CPU_UV_0$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=0; uv400=0; uv200=0; uv100=0;
+         uv1300=0; uv1200=0; uv1000=0; uv800=0; uv400=0; uv200=0; uv100=0;
     elif /sbin/busybox [ "`grep CPU_UV_1$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=0; uv400=25; uv200=25; uv100=50;
+         uv1300=0; uv1200=0; uv1000=0; uv800=0; uv400=25; uv200=25; uv100=50;
     elif /sbin/busybox [ "`grep CPU_UV_2$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=25; uv200=50; uv100=50;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=25; uv200=50; uv100=50;
     elif /sbin/busybox [ "`grep CPU_UV_3$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=25; uv200=50; uv100=100;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=25; uv200=50; uv100=100;
     elif /sbin/busybox [ "`grep CPU_UV_4$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=50; uv200=100; uv100=100;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=50; uv200=100; uv100=100;
     elif /sbin/busybox [ "`grep CPU_UV_5$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=75; uv200=100; uv100=125;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=75; uv200=100; uv100=125;
     elif /sbin/busybox [ "`grep CPU_UV_6$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=50; uv200=100; uv100=125;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=50; uv200=100; uv100=125;
     elif /sbin/busybox [ "`grep CPU_UV_7$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=50; uv200=125; uv100=125;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=50; uv200=125; uv100=125;
     elif /sbin/busybox [ "`grep CPU_UV_8$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=25; uv400=100; uv200=125; uv100=150;
+         uv1300=0; uv1200=0; uv1000=0; uv800=25; uv400=100; uv200=125; uv100=150;
     elif /sbin/busybox [ "`grep CPU_UV_9$ /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=0; uv800=50; uv400=100; uv200=125; uv100=150;
+         uv1300=0; uv1200=0; uv1000=0; uv800=50; uv400=100; uv200=125; uv100=150;
     elif /sbin/busybox [ "`grep CPU_UV_10 /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=25; uv800=50; uv400=50; uv200=100; uv100=125;
+         uv1300=0; uv1200=0; uv1000=25; uv800=50; uv400=50; uv200=100; uv100=125;
     elif /sbin/busybox [ "`grep CPU_UV_11 /system/etc/$CONFFILE`" ]; then
-         uvmaxmhz=25; uv800=50; uv400=75; uv200=125; uv100=150;
+         uv1300=0; uv1200=5; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
+    elif /sbin/busybox [ "`grep CPU_UV_12 /system/etc/$CONFFILE`" ]; then
+         uv1300=5; uv1200=15; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
+    elif /sbin/busybox [ "`grep CPU_UV_13 /system/etc/$CONFFILE`" ]; then
+         uv1300=10; uv1200=15; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
     else
-         uvmaxmhz=0; uv800=0; uv400=0; uv200=0; uv100=0;
+         uv1300=0; uv1200=0; uv1000=0; uv800=0; uv400=0; uv200=0; uv100=0;
     fi
 fi
-echo "UV: Values after preset parsing: $uvmaxmhz $uv800 $uv400  $uv200 $uv100"
+echo "UV: Values after preset parsing: $uv1300 $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100"
 
 # Manual undervolting values
 CONFFILE="midnight_cpu_uv_100.conf"
@@ -304,7 +393,7 @@ if [ -f /system/etc/$CONFFILE ];then
         echo "UV: Not overriding preset";let uv800=uv800;else let uv800=uv;fi
 fi
 
-CONFFILE="midnight_cpu_uv_maxmhz.conf"
+CONFFILE="midnight_cpu_uv_1000.conf"
 if [ -f /system/etc/$CONFFILE ];then
     uv=0
     if /sbin/busybox [ "`grep 005$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
@@ -318,13 +407,54 @@ if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep 080$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
     if /sbin/busybox [ "`grep 090$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
     if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
-    echo "UV: Calculated manual UV maxMhz mv: $uv"
-    echo "UV: Original UV maxMhz mv: $uvmaxmhz"
+    echo "UV: Calculated manual UV 1000Mhz mv: $uv"
+    echo "UV: Original UV 1000Mhz mv: $uv1000"
     if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
-        echo "UV: Not overriding preset";let uvmaxmhz=uvmaxmhz;else let uvmaxmhz=uv;fi
-    echo "UV: Setting undervolting values: $uvmaxmhz $uv800 $uv400 $uv200 $uv100 mV..."
+        echo "UV: Not overriding preset";let uv1000=uv1000;else let uv1000=uv;fi
 fi    
-echo "$uvmaxmhz $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+
+CONFFILE="midnight_cpu_uv_1200.conf"
+if [ -f /system/etc/$CONFFILE ];then
+    uv=0
+    if /sbin/busybox [ "`grep 005$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+    if /sbin/busybox [ "`grep 010$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+    if /sbin/busybox [ "`grep 020$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+    if /sbin/busybox [ "`grep 030$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+    if /sbin/busybox [ "`grep 040$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+    if /sbin/busybox [ "`grep 050$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+    if /sbin/busybox [ "`grep 060$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+    if /sbin/busybox [ "`grep 070$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+    if /sbin/busybox [ "`grep 080$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+    if /sbin/busybox [ "`grep 090$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+    if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+    echo "UV: Calculated manual UV 1200Mhz mv: $uv"
+    echo "UV: Original UV 1200Mhz mv: $uv1200"
+    if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+        echo "UV: Not overriding preset";let uv1200=uv1200;else let uv1200=uv;fi
+fi    
+
+CONFFILE="midnight_cpu_uv_1300.conf"
+if [ -f /system/etc/$CONFFILE ];then
+    uv=0
+    if /sbin/busybox [ "`grep 005$ /system/etc/$CONFFILE`" ]; then let uv=uv+5;fi
+    if /sbin/busybox [ "`grep 010$ /system/etc/$CONFFILE`" ]; then let uv=uv+10;fi
+    if /sbin/busybox [ "`grep 020$ /system/etc/$CONFFILE`" ]; then let uv=uv+20;fi
+    if /sbin/busybox [ "`grep 030$ /system/etc/$CONFFILE`" ]; then let uv=uv+30;fi
+    if /sbin/busybox [ "`grep 040$ /system/etc/$CONFFILE`" ]; then let uv=uv+40;fi
+    if /sbin/busybox [ "`grep 050$ /system/etc/$CONFFILE`" ]; then let uv=uv+50;fi
+    if /sbin/busybox [ "`grep 060$ /system/etc/$CONFFILE`" ]; then let uv=uv+60;fi
+    if /sbin/busybox [ "`grep 070$ /system/etc/$CONFFILE`" ]; then let uv=uv+70;fi
+    if /sbin/busybox [ "`grep 080$ /system/etc/$CONFFILE`" ]; then let uv=uv+80;fi
+    if /sbin/busybox [ "`grep 090$ /system/etc/$CONFFILE`" ]; then let uv=uv+90;fi
+    if /sbin/busybox [ "`grep 100$ /system/etc/$CONFFILE`" ]; then let uv=uv+100;fi
+    echo "UV: Calculated manual UV 1300Mhz mv: $uv"
+    echo "UV: Original UV 1300Mhz mv: $uv1300"
+    if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
+        echo "UV: Not overriding preset";let uv1300=uv1300;else let uv1300=uv;fi
+fi    
+
+echo "UV: Setting undervolting values: $uv1300 $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 mV..."
+echo "$uv1300 $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 
 # Lowmemorykiller/ADJ settings (o:2560,4096,6144,10240,11264,12288)
 echo "LMK tweaks"
@@ -720,6 +850,9 @@ echo "READ_AHEAD:"
 cat /sys/devices/virtual/bdi/179:0/read_ahead_kb
 cat /sys/devices/virtual/bdi/179:8/read_ahead_kb
 echo -n "CPU governor: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+echo -n "CPU governor conservative up_thr: ";cat /sys/devices/system/cpu/cpu0/cpufreq/conservative/up_threshold
+echo -n "CPU governor conservative down_thr: ";cat /sys/devices/system/cpu/cpu0/cpufreq/conservative/down_threshold
+echo -n "CPU governor ondemand up_thr: ";cat /sys/devices/system/cpu/cpu0/cpufreq/ondemand/up_threshold
 echo -n "CPU max frequency: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 echo -n "CPU UV: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 echo -n "LMK: FOREGROUND_APP_MEM: ";getprop ro.FOREGROUND_APP_MEM
@@ -748,6 +881,8 @@ echo -n "dirty_writeback_centisecs :";cat /proc/sys/vm/dirty_writeback_centisecs
 echo -n "dirty_expire_centisecs: ";cat /proc/sys/vm/dirty_expire_centisecs    
 echo -n "proc/sys/vm/dirty_background_ratio: ";cat /proc/sys/vm/dirty_background_ratio
 echo -n "/proc/sys/vm/dirty_ratio :";cat /proc/sys/vm/dirty_ratio                 
+echo "Modules:"
+lsmod
 echo "Mounts"
 mount|grep /system
 mount|grep /data
