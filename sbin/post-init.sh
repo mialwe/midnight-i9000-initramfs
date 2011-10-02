@@ -78,7 +78,7 @@ echo "Trying to remount EXT4 partitions with speed tweaks if any..."
   for k in $(/sbin/busybox_disabled mount | /sbin/busybox_disabled grep ext4 | /sbin/busybox_disabled cut -d " " -f3)
   do
         sync
-        /sbin/busybox_disabled mount -o remount,commit=20 $k
+        /sbin/busybox_disabled mount -o remount,noauto_da_alloc,commit=20 $k
   done
   
 ##################################
@@ -103,8 +103,7 @@ echo "Trying to remount EXT4 partitions with speed tweaks if any..."
   setprop ro.mot.eri.losalert.delay 1000;
   
 # kernel tweak
-echo "Setting kernel tweak #1 (SLEEPERS)..."
-  #mount -t debugfs none /sys/kernel/debug
+#echo "Setting kernel tweak #1 (SLEEPERS)..."
   echo "NO_NORMALIZED_SLEEPER" > /sys/kernel/debug/sched_features
   echo "NO_NEW_FAIR_SLEEPERS" > /sys/kernel/debug/sched_features
   echo "NO_GENTLE_FAIR_SLEEPERS" > /sys/kernel/debug/sched_features
@@ -253,12 +252,12 @@ if [ -f /system/etc/$CONFFILE ];then
 fi
 
 # Max. CPU frequency
-# old: echo 1 > /sys/devices/virtual/misc/midnight_cpufreq/oc1200
 echo "Setting CPU max freq..."
 CONFFILE="midnight_cpu_max.conf"
 echo "1000000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep MAX_1300 /system/etc/$CONFFILE`" ]; then
+      echo 1 > /sys/devices/virtual/misc/midnight_cpufreq/oc1300
       echo "1300000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
     elif /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
       echo "1200000" > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -299,18 +298,22 @@ if [ -f /system/etc/$CONFFILE ];then
     elif /sbin/busybox [ "`grep CPU_UV_9$ /system/etc/$CONFFILE`" ]; then
          uv1300=0; uv1200=0; uv1000=0; uv800=50; uv400=100; uv200=125; uv100=150;
     elif /sbin/busybox [ "`grep CPU_UV_10 /system/etc/$CONFFILE`" ]; then
-         uv1300=0; uv1200=0; uv1000=25; uv800=50; uv400=50; uv200=100; uv100=125;
+         uv1300=0; uv1200=0; uv1000=15; uv800=50; uv400=50; uv200=100; uv100=125;
     elif /sbin/busybox [ "`grep CPU_UV_11 /system/etc/$CONFFILE`" ]; then
          uv1300=0; uv1200=5; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
     elif /sbin/busybox [ "`grep CPU_UV_12 /system/etc/$CONFFILE`" ]; then
-         uv1300=5; uv1200=15; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
+         uv1300=0; uv1200=10; uv1000=15; uv800=50; uv400=75; uv200=125; uv100=150;
     elif /sbin/busybox [ "`grep CPU_UV_13 /system/etc/$CONFFILE`" ]; then
+         uv1300=0; uv1200=15; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
+    elif /sbin/busybox [ "`grep CPU_UV_14 /system/etc/$CONFFILE`" ]; then
+         uv1300=5; uv1200=10; uv1000=15; uv800=50; uv400=75; uv200=125; uv100=150;
+    elif /sbin/busybox [ "`grep CPU_UV_15 /system/etc/$CONFFILE`" ]; then
          uv1300=10; uv1200=15; uv1000=25; uv800=50; uv400=75; uv200=125; uv100=150;
     else
          uv1300=0; uv1200=0; uv1000=0; uv800=0; uv400=0; uv200=0; uv100=0;
     fi
 fi
-echo "UV: Values after preset parsing: $uv1300 $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100"
+echo "UV: Values after preset parsing: $uv1300/$uv1200, $uv1000, $uv800, $uv400, $uv200, $uv100"
 
 # Manual undervolting values
 CONFFILE="midnight_cpu_uv_100.conf"
@@ -452,9 +455,27 @@ if [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep NOOVERRIDE$ /system/etc/$CONFFILE`" ]; then 
         echo "UV: Not overriding preset";let uv1300=uv1300;else let uv1300=uv;fi
 fi    
-
-echo "UV: Setting undervolting values: $uv1300 $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 mV..."
-echo "$uv1300 $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+echo "UV: Checking max frequency again for uv settings 1.2Ghz or 1.3Ghz..."
+CONFFILE="midnight_cpu_max.conf"
+if [ -f /system/etc/$CONFFILE ];then
+    if /sbin/busybox [ "`grep MAX_1300 /system/etc/$CONFFILE`" ]; then
+        echo "UV: Setting max frequency 1.3Ghz UV $uv1200..."
+        echo "UV: Setting undervolting values: $uv1300 $uv1000 $uv800 $uv400 $uv200 $uv100 mV"
+        echo "$uv1300 $uv1000 $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+    elif /sbin/busybox [ "`grep MAX_1200 /system/etc/$CONFFILE`" ]; then
+        echo "UV: Setting undervolting values: $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 mV"
+        echo "UV: Setting max frequency 1.2Ghz UV $uv1200..."
+        echo "$uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+    else
+        echo "UV: Setting undervolting values: $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 mV"
+        echo "UV: CPU frequency will be limited to selected frequency < 1.2Ghz"
+        echo "$uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+    fi
+else 
+    echo "UV: Setting undervolting values: $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 mV"
+    echo "UV: CPU frequency will be limited to selected frequency < 1.2Ghz"
+    echo "$uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100" > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+fi    
 
 # Lowmemorykiller/ADJ settings (o:2560,4096,6144,10240,11264,12288)
 echo "LMK tweaks"
@@ -727,7 +748,10 @@ echo "Setting kernel tweaks #2"
 echo 100000 > /proc/sys/kernel/sched_latency_ns
 echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
 echo 750000 > /proc/sys/kernel/sched_min_granularity_ns
-    
+#echo "18000000" > /proc/sys/kernel/sched_latency_ns
+#echo "3000000" > /proc/sys/kernel/sched_wakeup_granularity_ns
+#echo "1500000" > /proc/sys/kernel/sched_min_granularity_ns
+      
 # IO scheduler 
 echo "Setting IO scheduler tweak..."
 CONFFILE="midnight_io_sched.conf"
