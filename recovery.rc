@@ -6,10 +6,7 @@ on init
     export LD_LIBRARY_PATH /vendor/lib:/system/lib
     export ANDROID_ROOT /system
     export ANDROID_DATA /data
-    #export EXTERNAL_STORAGE /sdcard
-
-    export INTERNAL_STORAGE /mnt/sdcard
-    export EXTERNAL_STORAGE /mnt/sdcard/external_sd
+    export EXTERNAL_STORAGE /sdcard
 
     symlink /system/etc /etc
 
@@ -22,9 +19,7 @@ on init
     mkdir /tmp
     mkdir /dbdata
 
-    #mkdir /mnt 0775 root system
     mkdir /mnt 0775 root root
-    mkdir /mnt/sdcard 0000 system system
 
     #mount /tmp /tmp tmpfs   
 
@@ -48,9 +43,8 @@ on early-fs
 
 on fs
     mount tmpfs tmpfs /tmp
+    mount ext4 /dev/block/stl9 /system
     mount rfs /dev/block/stl9 /system check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl9 /system noatime data=ordered nodelalloc
 
 # SEC_DMCRYPT for MC_CRYPT_ROOT before apply_disk_policy or apply_sec_devenc_init
     #chown system system /efs
@@ -59,29 +53,7 @@ on fs
     chmod 0771 /efs
     mount rfs /dev/block/stl3 /efs nosuid nodev check=no
 
-    #exec apply_disk_policy
-
-    #mount partitions
-    mount rfs /dev/block/mmcblk0p2 /data nosuid nodev check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/mmcblk0p2 /data noatime data=ordered nodelalloc
-    chown system system /data
-    chmod 0771 /data
-
-    mount rfs /dev/block/stl10 /dbdata nosuid nodev check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl10 /dbdata noatime data=ordered nodelalloc	
-    mkdir /dbdata/databases
-    chown system system /dbdata
-    chown system system /dbdata/databases
-    chmod 0771 /dbdata
-    chmod 0777 /dbdata/databases
-
-    mount rfs /dev/block/stl11 /cache nosuid nodev check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl11 /cache noatime data=ordered nodelalloc
-    chown system cache /cache
-    chmod 0770 /cache
+    exec apply_disk_policy
 
 on post-fs
     mount rootfs rootfs / ro remount
@@ -105,24 +77,16 @@ on boot
 service ueventd /sbin/ueventd
     critical
 
-#service console /system/bin/sh
-#service console /sbin/sh
-#    console
+service console /sbin/ext/busybox sh
+    console
 
-service recovery /sbin/recovery.sh
-#    console
-    oneshot
+service recovery /sbin/recovery-loader
 
-service adbd /sbin/adbd recovery
-	disabled
+service adbd /sbin/adbd
+    enabled
 
 on property:persist.service.adb.enable=1
     start adbd
 
 on property:persist.service.adb.enable=0
     stop adbd
-
-#make sure adbd is enabled
-#setprop persist.service.adb.enable 1
-#stop adbd
-#start adbd

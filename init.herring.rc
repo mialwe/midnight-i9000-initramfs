@@ -116,6 +116,8 @@ service bugreport /system/bin/dumpstate -d -v -o /sdcard/bugreports/bugreport
     oneshot
     keycodes 114 115 116
 
-
+service tvout /system/bin/tvoutserver
+     user system
+     group graphics
 
 	 

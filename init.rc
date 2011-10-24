@@ -115,6 +115,8 @@ loglevel 3
     # ko files for bthid
     insmod /lib/modules/bthid.ko
 
+    insmod /lib/modules/cpufreq_stats.ko
+
     #temp
     chown root root /sbin/fat.format
     chmod 750 /sbin/fat.format
@@ -126,9 +128,8 @@ on fs
     # mount yaffs2 mtd@system /system ro remount
     # mount yaffs2 mtd@userdata /data nosuid nodev
     # mount yaffs2 mtd@cache /cache nosuid nodev
+    mount ext4 /dev/block/stl9 /system
     mount rfs /dev/block/stl9 /system check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl9 /system noatime data=ordered nodelalloc
 
     # Temp add for FY -> GB update problem 
     # After update GB, need to remove
@@ -139,14 +140,12 @@ on fs
     copy /tmp/libz.so /system/lib/libz.so
     copy /tmp/libstdc++.so /system/lib/libstdc++.so
 		
-    exec umount
+#    exec umount
     
+    mount ext4 /dev/block/stl9 /system
     mount rfs /dev/block/stl9 /system check=no
     mount rfs /dev/block/stl9 /system ro remount
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl9 /system noatime data=ordered nodelalloc
-	mount ext4 /dev/block/stl9 /system ro remount
-	
+
 # SEC_DMCRYPT for MC_CRYPT_ROOT before apply_disk_policy or apply_sec_devenc_init
     #chown system system /efs
     #chown radio radio /efs
@@ -159,22 +158,22 @@ on fs
     chown root root /sbin/fat.format
     chmod 750 /sbin/fat.format
     
-    #exec apply_disk_policy
+    exec apply_disk_policy
 
     mkdir /data
 # SEC_DMCRYPT crypt flag added data
     # mount rfs /dev/block/mmcblk0p2 /data nosuid nodev check=no
-    mount rfs /dev/block/mmcblk0p2 /data nosuid nodev crypt check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/mmcblk0p2 /data noatime data=ordered nodelalloc
+    mount ext4 /dev/block/mmcblk0p2 /data nosuid nodev
+    mount rfs /dev/block/mmcblk0p2 /data nosuid nodev check=no
     chown system system /data
     chmod 0771 /data    
 
+    insmod /data/local/logger.ko
+
     mkdir /dbdata
   #SEC_DMCRYPT crypt flag added
-    mount rfs /dev/block/stl10 /dbdata nosuid nodev crypt check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl10 /dbdata noatime data=ordered nodelalloc
+    mount ext4 /dev/block/stl10 /dbdata nosuid nodev
+    mount rfs /dev/block/stl10 /dbdata nosuid nodev check=no
     #mount rfs /dev/block/stl10 /dbdata nosuid nodev check=no
     chown system system /dbdata
     chmod 0771 /dbdata
@@ -188,9 +187,9 @@ on fs
     mkdir /dbdata/db-journal
     chown system system /dbdata/db-journal
     chmod 0777 /dbdata/db-journal
+
+    mount ext4 /dev/block/stl11 /cache nosuid nodev
     mount rfs /dev/block/stl11 /cache nosuid nodev check=no
-	# SpeedMod ext4 support
-	mount ext4 /dev/block/stl11 /cache noatime data=ordered nodelalloc
 
     mkdir /mnt/.lfs 0755 root root
     mount j4fs /dev/block/stl6 /mnt/.lfs
@@ -264,7 +263,6 @@ on post-fs
     # give system access to wpa_supplicant.conf for backup and restore
     mkdir /data/wifi 0777 wifi wifi
 #    mkdir /data/misc/wifi 0771 wifi system
-#    mkdir /data/misc/wifi 0771 wifi wifi  
     mkdir /data/misc/wifi 0770 wifi system  
     chmod 0777 /data/misc/wifi/
     chmod 0777 /data/wifi/
@@ -504,8 +502,8 @@ on boot
 # Define the oom_adj values for the classes of processes that can be
 # killed by the kernel.  These are used in ActivityManagerService.
     setprop ro.FOREGROUND_APP_ADJ 0
-    setprop ro.VISIBLE_APP_ADJ 2
-    setprop ro.PERCEPTIBLE_APP_ADJ 1
+    setprop ro.VISIBLE_APP_ADJ 1
+    setprop ro.PERCEPTIBLE_APP_ADJ 2
     setprop ro.HEAVY_WEIGHT_APP_ADJ 2
     setprop ro.SECONDARY_SERVER_ADJ 2
     setprop ro.BACKUP_APP_ADJ 2
@@ -517,11 +515,6 @@ on boot
 # to enable wifi
      setprop wifi.interface "eth0"
 
-# MIDNIGHT: The following lines are commented out to allow
-# setting tose values later triggered by a CWM defined preset.
-# As they are readonly values they can be written only once - and
-# that must not be right here :)
-
 # Define the memory thresholds at which the above process classes will
 # be killed.  These numbers are in pages (4k).
 #    setprop ro.FOREGROUND_APP_MEM 2560
@@ -530,10 +523,10 @@ on boot
 #    setprop ro.HEAVY_WEIGHT_APP_MEM 4096
 #    setprop ro.SECONDARY_SERVER_MEM 6144
 #    setprop ro.BACKUP_APP_MEM 6144
-#    setprop ro.HOME_APP_MEM 2560
-#    setprop ro.HIDDEN_APP_MEM 14080
-#    setprop ro.CONTENT_PROVIDER_MEM 15360
-#    setprop ro.EMPTY_APP_MEM 20480
+#    setprop ro.HOME_APP_MEM 6144
+#    setprop ro.HIDDEN_APP_MEM 10240
+#    setprop ro.CONTENT_PROVIDER_MEM 11264
+#    setprop ro.EMPTY_APP_MEM 12288
 
 # Write value must be consistent with the above properties.
 # Note that the driver only supports 6 slots, so we have combined some of
@@ -543,8 +536,9 @@ on boot
 
     write /proc/sys/vm/overcommit_memory 1
     write /proc/sys/vm/min_free_order_shift 4
-    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,14080,15360,20480
-
+#    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,10240,11264,12288
+#    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,6144,14080,15360,20480
+    write /sys/module/lowmemorykiller/parameters/minfree 2560,4096,11776,14080,15360,20480
     # Set init its forked children's oom_adj.
     write /proc/1/oom_adj -16
 
@@ -607,7 +601,17 @@ on boot
     chown system system /dev/dun
 # +++++++++++++++++++++++++++++++++++++++++++      
 
+    # Chainfire - system patch run & wait
+    start cfpatch
+    write /data/sync_fifo sync
+
     class_start default
+
+# Chainfire - system patch service
+service cfpatch /sbin/boot-patch.sh
+	user root
+	oneshot
+	disabled
 
 ## Daemon processes to be run by init.
 ##
@@ -725,17 +729,11 @@ service media /system/bin/mediaserver
     group system audio camera graphics inet net_bt net_bt_admin net_raw radio
     ioprio rt 4
 
-
-#service samsungani /system/bin/samsungani
 service samsungani /sbin/bootanimation.sh
     user graphics
     group graphics
     disabled
     oneshot
-
-#service wpa_supplicant /system/bin/wpa_supplicant -Dwext -ieth0 -c/data/wifi/bcm_supp.conf
-#    disabled
-#    oneshot
 
 service playsound /system/bin/playsound
     user media
@@ -827,13 +825,4 @@ service gpsd /system/vendor/bin/launch_gps.sh
     socket gps seqpacket 0660 gps system
     user gps
     group system inet
-
-service tvout /system/bin/tvoutserver
-     user system
-     group graphics
-     
-service post-init /sbin/post-init.sh
-    user root
-    oneshot
-
 
