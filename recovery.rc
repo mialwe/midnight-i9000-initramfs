@@ -77,7 +77,7 @@ on boot
 service ueventd /sbin/ueventd
     critical
 
-service console /sbin/ext/busybox sh
+service console /sbin/busybox sh
     console
 
 service recovery /sbin/recovery-loader

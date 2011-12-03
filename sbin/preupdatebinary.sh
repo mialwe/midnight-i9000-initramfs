@@ -1,6 +1,6 @@
-#!/sbin/ext/busybox sh
+#!/sbin/busybox_disabled sh
 
-mount /system
-mount /data
-mount /datadata
-mount /cache
+/sbin/busybox_disabled mount /system
+/sbin/busybox_disabled mount /data
+/sbin/busybox_disabled mount /datadata
+/sbin/busybox_disabled mount /cache
