@@ -56,26 +56,18 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
         echo "KERNEL: setting kernel tweaks..."
         echo "NO_GENTLE_FAIR_SLEEPERS" > /sys/kernel/debug/sched_features
 
-        #CFS
         echo 500 512000 64 2048 > /proc/sys/kernel/sem; 
 
+        # CFS
         # Testing, from Thunderbolt/Pikachu01
-        echo 1000000 > /proc/sys/kernel/sched_latency_ns;
+        echo 400000 > /proc/sys/kernel/sched_latency_ns;
         echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns;
-        echo 500000 > /proc/sys/kernel/sched_min_granularity_ns;
+        echo 200000 > /proc/sys/kernel/sched_min_granularity_ns;
 
         # Midnight original
         #echo 100000 > /proc/sys/kernel/sched_latency_ns
         #echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
         #echo 750000 > /proc/sys/kernel/sched_min_granularity_ns
-
-        #echo 3000000 > /proc/sys/kernel/sched_latency_ns
-        #echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
-        #echo 750000 > /proc/sys/kernel/sched_min_granularity_ns
-
-        #echo 18000000 > /proc/sys/kernel/sched_latency_ns
-        #echo 3000000 > /proc/sys/kernel/sched_wakeup_granularity_ns
-        #echo 1500000 > /proc/sys/kernel/sched_min_granularity_ns
 
         echo 0 > /proc/sys/kernel/panic_on_oops
         echo 0 > /proc/sys/kernel/panic
@@ -87,5 +79,16 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
         echo -n "KERNEL: check sched_min_granularity_ns: ";cat /proc/sys/kernel/sched_min_granularity_ns
         echo -n "KERNEL: check sleepers: ";cat /sys/kernel/debug/sched_features
         echo -n "KERNEL: check semaphores: ";cat /proc/sys/kernel/sem
+
+        echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse
+        echo 1 > /proc/sys/net/ipv4/tcp_sack
+        echo 1 > /proc/sys/net/ipv4/tcp_dsack
+        echo 1 > /proc/sys/net/ipv4/tcp_tw_recycle
+        echo 1 > /proc/sys/net/ipv4/tcp_window_scaling
+        echo 5 > /proc/sys/net/ipv4/tcp_keepalive_probes
+        echo 30 > /proc/sys/net/ipv4/tcp_keepalive_intvl
+        echo 30 > /proc/sys/net/ipv4/tcp_fin_timeout
+        echo 0 > /proc/sys/net/ipv4/tcp_timestamps
+        
     fi
 fi
