@@ -8,6 +8,9 @@
 
 /sbin/busybox ln -s /sbin/busybox /sbin/sh
 
+/sbin/busybox rm /mnt/sdcard 
+/sbin/busybox ln -s /sdcard /mnt/sdcard
+
 start adbd
 stop tvout
 
