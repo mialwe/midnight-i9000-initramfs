@@ -1,9 +1,12 @@
 echo "Mounting rootfs readwrite..."
 /sbin/busybox mount -t rootfs -o remount,rw rootfs
-
-echo "RAM:"
-cat /proc/meminfo
-
+echo
+echo "RAM (/proc/meminfo):"
+cat /proc/meminfo|grep ^MemTotal
+cat /proc/meminfo|grep ^MemFree
+cat /proc/meminfo|grep ^Buffers
+cat /proc/meminfo|grep ^Cached
+echo
 echo "Disabling /sbin/busybox, using /system/xbin/busybox now..."
 /sbin/busybox_disabled rm /sbin/busybox
 

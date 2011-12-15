@@ -58,16 +58,11 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
 
         echo 500 512000 64 2048 > /proc/sys/kernel/sem; 
 
-        # new test, 2011/07/12
-        echo 750000 > /proc/sys/kernel/sched_latency_ns;
-        echo 250000 > /proc/sys/kernel/sched_wakeup_granularity_ns;
-        echo 500000 > /proc/sys/kernel/sched_min_granularity_ns;
-
-        # testing, from Thunderbolt/Pikachu01
-        #echo 400000 > /proc/sys/kernel/sched_latency_ns;
-        #echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns;
-        #echo 200000 > /proc/sys/kernel/sched_min_granularity_ns;
-
+        # readded 2011/12/13, testing, from Thunderbolt/Pikachu01
+        echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns;
+        echo 200000 > /proc/sys/kernel/sched_min_granularity_ns;
+        echo 600000 > /proc/sys/kernel/sched_latency_ns;
+        
         # Midnight original
         #echo 100000 > /proc/sys/kernel/sched_latency_ns
         #echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns

@@ -168,7 +168,7 @@ on fs
     chown system system /data
     chmod 0771 /data    
 
-    insmod /data/local/logger.ko
+    insmod /lib/modules/logger.ko
 
     mkdir /dbdata
   #SEC_DMCRYPT crypt flag added
