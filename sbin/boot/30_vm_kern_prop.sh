@@ -58,10 +58,15 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
 
         echo 500 512000 64 2048 > /proc/sys/kernel/sem; 
 
-        # readded 2011/12/13, testing, from Thunderbolt/Pikachu01
+        # readded 2011/12/17, testing, from Thunderbolt/Pikachu01
+        echo 400000 > /proc/sys/kernel/sched_latency_ns;
         echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns;
         echo 200000 > /proc/sys/kernel/sched_min_granularity_ns;
-        echo 600000 > /proc/sys/kernel/sched_latency_ns;
+
+        # readded 2011/12/13, testing, from Thunderbolt/Pikachu01
+        #echo 600000 > /proc/sys/kernel/sched_latency_ns;
+        #echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns;
+        #echo 200000 > /proc/sys/kernel/sched_min_granularity_ns;
         
         # Midnight original
         #echo 100000 > /proc/sys/kernel/sched_latency_ns
@@ -70,9 +75,12 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
 
         echo 0 > /proc/sys/kernel/panic_on_oops
         echo 0 > /proc/sys/kernel/panic
+        
+        # have to re-check those...
         #echo 2048 > /proc/sys/kernel/msgmni 
         #echo 64000 > /proc/sys/kernel/msgmax
         #echo 268435456 > /proc/sys/kernel/shmmax
+        
         echo -n "KERNEL: check sched_latency_ns: ";cat /proc/sys/kernel/sched_latency_ns
         echo -n "KERNEL: check sched_wakeup_granularity_ns: "; cat /proc/sys/kernel/sched_wakeup_granularity_ns
         echo -n "KERNEL: check sched_min_granularity_ns: ";cat /proc/sys/kernel/sched_min_granularity_ns

@@ -102,9 +102,9 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
     elif /sbin/busybox [ "`grep TOUCH_PLUS3 /system/etc/$CONFFILE`" ]; then
         echo "Setting preset PLUS3..."
         echo 7020 > /sys/class/touch/switch/set_touchscreen
-        echo 8001 > /sys/class/touch/switch/set_touchscreen
+        echo 8000 > /sys/class/touch/switch/set_touchscreen
         echo 11001 > /sys/class/touch/switch/set_touchscreen
-        echo 13020 > /sys/class/touch/switch/set_touchscreen
+        echo 13010 > /sys/class/touch/switch/set_touchscreen
         echo 14005 > /sys/class/touch/switch/set_touchscreen       
     fi
 else 
