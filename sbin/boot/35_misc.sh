@@ -2,17 +2,36 @@ echo "Mounting rootfs readwrite..."
 /sbin/busybox mount -t rootfs -o remount,rw rootfs
  
 # Screen color settings
+# echo 3 > /sys/class/misc/rgbb_multiplier/brightness_multiplier lowered brightness
+# echo 3669991042 > /sys/class/misc/rgbb_multiplier/blue_multiplier Midnight default
+# echo 3999991042 > /sys/class/misc/rgbb_multiplier/blue_multiplier colder
+# echo 4285991042 > /sys/class/misc/rgbb_multiplier/blue_multiplier even colder :)
+
 echo "Setting video driver options..."
+echo -n "Initial R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
+echo -n "Initial G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
+echo -n "Initial B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
+
+echo 3669991042 > /sys/class/misc/rgbb_multiplier/blue_multiplier
+
 CONFFILE="midnight_gfx.conf"
 if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
     if /sbin/busybox [ "`grep COLD /system/etc/$CONFFILE`" ]; then
-      echo 1 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
+        echo "Setting preset COLD..."
+        echo 4285991042 > /sys/class/misc/rgbb_multiplier/blue_multiplier
     fi
 
     if /sbin/busybox [ "`grep WARM /system/etc/$CONFFILE`" ]; then
-      echo 2 > /sys/devices/virtual/misc/speedmodk_mdnie/color_temp
+        echo "Setting preset WARM..."
+        echo 3509991042 > /sys/class/misc/rgbb_multiplier/red_multiplier
+        echo 3509991042 > /sys/class/misc/rgbb_multiplier/blue_multiplier
+        echo 3109991042 > /sys/class/misc/rgbb_multiplier/green_multiplier
     fi
 fi
+
+echo -n "Adjusted R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
+echo -n "Adjusted G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
+echo -n "Adjusted B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
 
 CONFFILE="midnight_misc.conf"
 echo "Setting misc. options..."

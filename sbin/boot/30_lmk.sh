@@ -1,11 +1,13 @@
 # Lowmemorykiller/ADJ settings (o:2560,4096,6144,10240,11264,12288)
 echo "LMK tweaks"
 CONFFILE="midnight_lmk.conf"
-ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=14080;ADJ14=15360;ADJ15=17920;
+# old: ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=14080;ADJ14=15360;ADJ15=17920;
+# new: 6,9,13,48,60,70 Mb 
+ADJ0=1536;ADJ1=2304;ADJ2=3328;ADJ7=12288;ADJ14=15360;ADJ15=17920;
 if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
     echo "LMK: Setting preset..."
     if /sbin/busybox [ "`grep LMK0 /system/etc/$CONFFILE`" ]; then
-        ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=14080;ADJ14=15360;ADJ15=17920;
+        ADJ0=1536;ADJ1=2304;ADJ2=3328;ADJ7=12288;ADJ14=15360;ADJ15=17920;
         echo "LMK: using preset #0"
     elif /sbin/busybox [ "`grep LMK1 /system/etc/$CONFFILE`" ]; then
         ADJ0=2048;ADJ1=3072;ADJ2=4096;ADJ7=6144;ADJ14=7168;ADJ15=8192;
@@ -26,7 +28,7 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
         ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=15872;ADJ14=18944;ADJ15=24576;
         echo "LMK: using preset #6"
     else
-        ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=14080;ADJ14=15360;ADJ15=17920;
+        ADJ0=1536;ADJ1=2304;ADJ2=3328;ADJ7=12288;ADJ14=15360;ADJ15=17920;
         echo "LMK: no matching preset found, using default preset #0"
     fi
 fi

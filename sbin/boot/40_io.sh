@@ -66,16 +66,12 @@ if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
         # IO scheduler 
         echo "IO: setting IO scheduler..."
         CONFFILE="midnight_io_sched.conf"
-        SCHEDULER="noop"
+        SCHEDULER="sio"
         if /sbin/busybox [ -f /system/etc/$CONFFILE ];then
             if /sbin/busybox [ "`grep IO_SCHED_NOOP /system/etc/$CONFFILE`" ]; then
                 SCHEDULER="noop"
             elif /sbin/busybox [ "`grep IO_SCHED_VR /system/etc/$CONFFILE`" ]; then
                 SCHEDULER="vr"
-            elif /sbin/busybox [ "`grep IO_SCHED_CFQ /system/etc/$CONFFILE`" ]; then
-                SCHEDULER="cfq"
-            elif /sbin/busybox [ "`grep IO_SCHED_DEADLINE /system/etc/$CONFFILE`" ]; then
-                SCHEDULER="deadline"
             elif /sbin/busybox [ "`grep IO_SCHED_SIO /system/etc/$CONFFILE`" ]; then
                 SCHEDULER="sio"
             fi
