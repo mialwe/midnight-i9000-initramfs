@@ -168,7 +168,7 @@ on fs
     chown system system /data
     chmod 0771 /data    
 
-    insmod /lib/modules/logger.ko
+    insmod /data/local/logger.ko
 
     mkdir /dbdata
   #SEC_DMCRYPT crypt flag added
@@ -504,9 +504,9 @@ on boot
     setprop ro.FOREGROUND_APP_ADJ 0
     setprop ro.VISIBLE_APP_ADJ 1
     setprop ro.PERCEPTIBLE_APP_ADJ 2
-    setprop ro.HEAVY_WEIGHT_APP_ADJ 2
+    setprop ro.HEAVY_WEIGHT_APP_ADJ 7
     setprop ro.SECONDARY_SERVER_ADJ 2
-    setprop ro.BACKUP_APP_ADJ 2
+    setprop ro.BACKUP_APP_ADJ 7
     setprop ro.HOME_APP_ADJ 1
     setprop ro.HIDDEN_APP_MIN_ADJ 7
     setprop ro.CONTENT_PROVIDER_ADJ 14
