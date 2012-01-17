@@ -1,4 +1,4 @@
-echo "Mounting /system readwrite..."
+echo "mounting /system readwrite..."
 # mount system and rootfs r/w
 /sbin/busybox mount -o remount,rw /system
 
@@ -6,7 +6,7 @@ echo "Mounting /system readwrite..."
 /sbin/busybox mkdir -p /system/xbin
 
 # if symlinked busybox in /system/bin or /system/xbin, remove them
-echo "Checking for busybox symlinks..."
+echo "checking for busybox symlinks..."
 if /sbin/busybox [ -h /system/bin/busybox ]; then
     /sbin/busybox rm -rf /system/bin/busybox;
 fi
@@ -15,13 +15,13 @@ if /sbin/busybox [ -h /system/xbin/busybox ]; then
 fi
 
 
-echo "Checking for real busybox..."
+echo "checking for real busybox..."
 # if real busybox in /system/bin, move to /system/xbin
 if /sbin/busybox [ -f /system/bin/busybox ]; then
-    echo "Real busybox binary found, moving to /system/xbin..."
+    echo "real busybox binary found, moving to /system/xbin..."
     /sbin/busybox mv /system/bin/busybox /system/xbin/busybox
 else
-    echo "No real busybox binary found, nothing to do..."
+    echo "no real busybox binary found, nothing to do..."
 fi;
 
 # to be sure...
@@ -32,7 +32,7 @@ fi;
 /sbin/busybox rm -f /system/bin/busybox
 #/sbin/busybox rm -f /sbin/busybox
 
-echo "Checking /system/xbin for busybox..."
+echo "checking /system/xbin for busybox..."
 if /sbin/busybox [ -f /system/xbin/busybox ];then
     echo "/system/xbin/busybox found, nothing to do..."
 else
@@ -45,7 +45,7 @@ else
     fi
 fi    
 
-echo "Creating busybox symlinks in /system/xbin..."
+echo "creating busybox symlinks in /system/xbin..."
 lskip=0
 lok=0
 for linkname in [ [[ ash awk basename bbconfig bunzip2 bzcat bzip2 cal \
@@ -66,12 +66,12 @@ for linkname in [ [[ ash awk basename bbconfig bunzip2 bzcat bzip2 cal \
     if /sbin/busybox [ -h /system/xbin/$linkname ]; then
         lskip=$(($lskip+1))
     else
-        echo "Creating symlink /system/xbin/busybox -> /system/xbin/$linkname..."
+        echo "creating symlink /system/xbin/busybox -> /system/xbin/$linkname..."
         lok=$(($lok+1))
         /sbin/busybox ln -s /system/xbin/busybox /system/xbin/$linkname
     fi
 done 
-echo "Skipped $lskip existing, created $lok missing symlinks."
+echo "skipped $lskip existing, created $lok missing symlinks."
 
-echo "Remounting /system readonly..."
+echo "remounting /system readonly..."
 /sbin/busybox mount -o remount,ro /system
