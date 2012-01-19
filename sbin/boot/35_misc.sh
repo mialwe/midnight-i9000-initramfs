@@ -24,8 +24,6 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
         uv200=`/sbin/busybox awk -F"\"" ' /uv_200\"/ {print $4}' $xmlfile`;#uv200=$(($uv200*(-1)))
         uv100=`/sbin/busybox awk -F"\"" ' /uv_100\"/ {print $4}' $xmlfile`;#uv100=$(($uv100*(-1)))
         echo "APP: uv at boot -> $uvatboot"
-        echo "APP: uv1300 -> $uv1300"
-        echo "APP: uv1200 -> $uv1200"
         echo "APP: uv1000 -> $uv1000"
         echo "APP: uv800  -> $uv800"
         echo "APP: uv400  -> $uv400"
@@ -588,5 +586,3 @@ echo "disabling /sbin/busybox, using /system/xbin/busybox now..."
 
 echo "mounting rootfs readonly..."
 /sbin/busybox_disabled mount -t rootfs -o remount,ro rootfs;
-
-
