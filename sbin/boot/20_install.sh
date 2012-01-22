@@ -55,18 +55,10 @@ else
 fi
 
 # install MidnightControl.apk
-# TODO, /system or /data?
-#
-#echo "installing /system/app/MidnightControl.apk"
-#echo "if this fails free some space on /system."
-#/sbin/busybox cat /res/misc/MidnightControl.apk > /system/app/MidnightControl.apk
-#/sbin/busybox chown 0.0 /system/app/MidnightControl.apk
-#/sbin/busybox chmod 644 /system/app/MidnightControl.apk
-
-echo "removing /system/app/MidnightControl.apk..."
-if /sbin/busybox [ -f /system/app/MidnightControl.apk ];then
-    /sbin/busybox rm /system/app/MidnightControl.apk
-fi
+echo "installing /system/app/MidnightControl.apk"
+/sbin/busybox cat /res/misc/MidnightControl.apk > /system/app/MidnightControl.apk
+/sbin/busybox chown 0.0 /system/app/MidnightControl.apk
+/sbin/busybox chmod 644 /system/app/MidnightControl.apk
 
 echo "checking /data/local/logger.ko (Logcat)..."
 if /sbin/busybox [ -f /data/local/logger.ko ];then

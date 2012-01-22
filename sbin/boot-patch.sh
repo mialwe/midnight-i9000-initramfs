@@ -7,9 +7,9 @@ exec 2>&1
 
 # say hello :)
 echo
-echo "*********************************************************************"
-echo "*                MIDNIGHT KERNEL INITSCRIPT LOG                     *"
-echo "*********************************************************************"
+echo "************************************************"
+echo "MIDNIGHT KERNEL INITSCRIPT LOG"
+echo "************************************************"
 echo
 echo -n "Kernel: ";uname -r
 echo -n "PATH: ";echo $PATH

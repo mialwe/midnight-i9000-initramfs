@@ -8,15 +8,11 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
     echo "APP: checking app preferences..."
     if /sbin/busybox [ -f $xmlfile ];then
         echo "APP: preferences file found, parsing..."
-        sched=`/sbin/busybox sed -n 's|<string name=\"midnight_io\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: IO sched -> $sched"
 
         cpumax=`/sbin/busybox sed -n 's|<string name=\"midnight_cpu_max\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: cpumax -> $cpumax"
-
         cpugov=`/sbin/busybox sed -n 's|<string name=\"midnight_cpu_gov\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: cpugov -> $cpugov"
-
         uvatboot=`/sbin/busybox awk -F"\"" ' /c_toggle_uv_boot\"/ {print $4}' $xmlfile`
         uv1000=`/sbin/busybox awk -F"\"" ' /uv_1000\"/ {print $4}' $xmlfile`;#uv1000=$(($uv1000*(-1)))
         uv800=`/sbin/busybox awk -F"\"" ' /uv_800\"/ {print $4}' $xmlfile`;#uv800=$(($uv800*(-1)))
@@ -57,12 +53,6 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
         echo "APP: sensitivity -> $touch"
         lmk=`/sbin/busybox sed -n 's|<string name=\"midnight_lmk\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: LMK -> $lmk"
-        readahead=`/sbin/busybox sed -n 's|<string name=\"midnight_readahead\">\(.*\)</string>|\1|p' $xmlfile`
-        echo "APP: readahead -> $readahead"
-        
-        #if /sbin/busybox [ "$logcat" == "true" ];then
-        #    echo "Logcat set: $logcat"
-        #fi
     else
         echo "APP: preferences file not found."
     fi
@@ -361,16 +351,8 @@ echo -n "CPU: Check UV values: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_
 #--------------------------------------------------------------------
 echo
 echo "IO: setting sdcard READ_AHEAD..."
-if /sbin/busybox [[ "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512 || "$readahead" -eq 1024 || "$readahead" -eq 2048 || "$readahead" -eq 3072 || "$readahead" -eq 4096 ]];then
-    echo "IO: found vaild read_ahead: <$readahead>"
-    echo $readahead > /sys/devices/virtual/bdi/179:0/read_ahead_kb
-    echo $readahead > /sys/devices/virtual/bdi/179:8/read_ahead_kb
-else
-    echo "IO: setting 1024Kb sdcard readahead..."
-    echo "1024" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
-    echo "1024" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
-fi
-
+echo "1024" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
+echo "1024" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
 if /sbin/busybox [ -e /sys/devices/virtual/bdi/default/read_ahead_kb ]; then
     echo "IO: setting default READ_AHEAD..."
     echo "512" > /sys/devices/virtual/bdi/default/read_ahead_kb;
@@ -383,16 +365,6 @@ STL=`ls -d /sys/block/stl*`;
 BML=`ls -d /sys/block/bml*`;
 MMC=`ls -d /sys/block/mmc*`;
 TFSR=`ls -d /sys/block/tfsr*`;
-
-if /sbin/busybox [ ! -z "$sched" ];then
-    echo "IO: setting scheduler..."
-    if /sbin/busybox [[ "$sched" == "noop" || "$sched" == "sio" ]];then
-        echo "IO: setting <$sched>..."
-        for i in $STL $BML $MMC $TFSR; do 
-            echo "$sched" > "$i"/queue/scheduler;
-        done   
-    fi
-fi
 
 echo "IO: setting scheduler tweaks..."
 for i in $STL $BML $MMC $TFSR; 
