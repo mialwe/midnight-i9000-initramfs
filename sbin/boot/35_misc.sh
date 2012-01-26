@@ -8,7 +8,8 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
     echo "APP: checking app preferences..."
     if /sbin/busybox [ -f $xmlfile ];then
         echo "APP: preferences file found, parsing..."
-
+        sched=`/sbin/busybox sed -n 's|<string name=\"midnight_io\">\(.*\)</string>|\1|p' $xmlfile`
+        echo "APP: IO sched -> $sched"
         cpumax=`/sbin/busybox sed -n 's|<string name=\"midnight_cpu_max\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: cpumax -> $cpumax"
         cpugov=`/sbin/busybox sed -n 's|<string name=\"midnight_cpu_gov\">\(.*\)</string>|\1|p' $xmlfile`
@@ -62,6 +63,35 @@ else
     rm /cache/midnight_block
 fi
 
+#--------------------------------------------------------------------
+# COLORS - AS SOON AS POSSIBLE
+#--------------------------------------------------------------------                               
+#echo
+#echo -n "COLOR: initial R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
+#echo -n "COLOR: initial G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
+#echo -n "COLOR: initial B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
+
+#mmr=$(($mr*1000000));
+#mmg=$(($mg*1000000));
+#mmb=$(($mb*1000000));
+#echo "COLOR: multiplied multiplier: $mmr, $mmg, $mmb"
+
+#mrr=$((1887492806+$mmr));
+#mgg=$((2169824215+$mmg));
+#mbb=$((3209991042+$mmb));
+#echo "COLOR: new multipliers: $mrr, $mgg, $mbb"
+
+#echo "$mrr" > /sys/class/misc/rgbb_multiplier/red_multiplier
+#echo "$mgg" > /sys/class/misc/rgbb_multiplier/green_multiplier
+#echo "$mbb" > /sys/class/misc/rgbb_multiplier/blue_multiplier
+
+#echo -n "COLOR: new R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
+#echo -n "COLOR: new G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
+#echo -n "COLOR: new B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
+
+#--------------------------------------------------------------------
+# LET'S GO
+#--------------------------------------------------------------------                               
 echo
 echo "Mounting rootfs readwrite..."
 /sbin/busybox mount -t rootfs -o remount,rw rootfs
@@ -366,6 +396,16 @@ BML=`ls -d /sys/block/bml*`;
 MMC=`ls -d /sys/block/mmc*`;
 TFSR=`ls -d /sys/block/tfsr*`;
 
+if /sbin/busybox [ ! -z "$sched" ];then
+    echo "IO: setting scheduler..."
+    if /sbin/busybox [[ "$sched" == "noop" || "$sched" == "sio" || "$sched" == "vr" ]];then
+        echo "IO: setting <$sched>..."
+        for i in $STL $BML $MMC $TFSR; do
+            echo "$sched" > "$i"/queue/scheduler;
+        done
+    fi
+fi
+
 echo "IO: setting scheduler tweaks..."
 for i in $STL $BML $MMC $TFSR; 
 do                            
@@ -400,11 +440,7 @@ if /sbin/busybox [ -e /sys/block/stl10/queue/iosched/fifo_batch ];then
 fi
 #--------------------------------------------------------------------
 # MISC LOG
-#--------------------------------------------------------------------                               
-echo
-echo -n "VIDEO: initial R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
-echo -n "VIDEO: initial G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
-echo -n "VIDEO: initial B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
+#--------------------------------------------------------------------
 echo   
 echo "RAM (/proc/meminfo):"
 cat /proc/meminfo|grep ^MemTotal
@@ -493,9 +529,9 @@ if /sbin/busybox [ "$initd" == "true" ];then
     echo -n "PROP: ro.mot.eri.losalert.delay: ";getprop ro.mot.eri.losalert.delay
     echo -n "PROP: debug.performance.tuning: ";getprop debug.performance.tuning
     echo -n "PROP: video.accelerate.hw: ";getprop video.accelerate.hw
-    echo -n "VIDEO: initial R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
-    echo -n "VIDEO: initial G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
-    echo -n "VIDEO: initial B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
+    #echo -n "VIDEO: initial R: ";cat /sys/class/misc/rgbb_multiplier/red_multiplier
+    #echo -n "VIDEO: initial G: ";cat /sys/class/misc/rgbb_multiplier/green_multiplier
+    #echo -n "VIDEO: initial B: ";cat /sys/class/misc/rgbb_multiplier/blue_multiplier
     echo -n "KERNEL: check sched_latency_ns: ";cat /proc/sys/kernel/sched_latency_ns
     echo -n "KERNEL: check sched_wakeup_granularity_ns: "; cat /proc/sys/kernel/sched_wakeup_granularity_ns
     echo -n "KERNEL: check sched_min_granularity_ns: ";cat /proc/sys/kernel/sched_min_granularity_ns
