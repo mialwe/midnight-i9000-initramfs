@@ -1,5 +1,5 @@
 #initialize cpu
-uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;cpumax=1000000;
+uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;uv1200=0;cpumax=1000000;
 
 # app settings parsing
 if /sbin/busybox [ ! -f /cache/midnight_block ];then
@@ -15,6 +15,7 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
         cpugov=`/sbin/busybox sed -n 's|<string name=\"midnight_cpu_gov\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: cpugov -> $cpugov"
         uvatboot=`/sbin/busybox awk -F"\"" ' /c_toggle_uv_boot\"/ {print $4}' $xmlfile`
+        uv1200=`/sbin/busybox awk -F"\"" ' /uv_1200\"/ {print $4}' $xmlfile`;#uv1200=$(($uv1200*(-1)))
         uv1000=`/sbin/busybox awk -F"\"" ' /uv_1000\"/ {print $4}' $xmlfile`;#uv1000=$(($uv1000*(-1)))
         uv800=`/sbin/busybox awk -F"\"" ' /uv_800\"/ {print $4}' $xmlfile`;#uv800=$(($uv800*(-1)))
         uv400=`/sbin/busybox awk -F"\"" ' /uv_400\"/ {print $4}' $xmlfile`;#uv400=$(($uv400*(-1)))
@@ -54,6 +55,8 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
         echo "APP: sensitivity -> $touch"
         lmk=`/sbin/busybox sed -n 's|<string name=\"midnight_lmk\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: LMK -> $lmk"
+        readahead=`/sbin/busybox sed -n 's|<string name=\"midnight_rh\">\(.*\)</string>|\1|p' $xmlfile`
+        echo "APP: readahead -> $readahead"
     else
         echo "APP: preferences file not found."
     fi
@@ -349,7 +352,7 @@ fi
 #--------------------------------------------------------------------
 echo
 echo "CPU: applying CPU settings..."
-if /sbin/busybox [[ "$cpumax" -eq 1000000 || "$cpumax" -eq 800000  || "$cpumax" -eq 400000 ]];then
+if /sbin/busybox [[ "$cpumax" -eq 1200000 || "$cpumax" -eq 1000000 || "$cpumax" -eq 800000  || "$cpumax" -eq 400000 ]];then
     echo "CPU: found vaild cpumax: <$cpumax>"
     echo $cpumax > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 fi
@@ -360,6 +363,7 @@ if /sbin/busybox [[ "$cpugov" == "ondemand" || "$cpugov" == "conservative" ]];th
 fi
 
 if /sbin/busybox [ ! -f /cache/midnight_block ];then
+    if /sbin/busybox [ "$uv1200" -lt 0 ];then uv1200=$(($uv1200*(-1)));else uv1200=0;fi
     if /sbin/busybox [ "$uv1000" -lt 0 ];then uv1000=$(($uv1000*(-1)));else uv1000=0;fi
     if /sbin/busybox [ "$uv800" -lt 0 ];then uv800=$(($uv800*(-1)));else uv800=0;fi
     if /sbin/busybox [ "$uv400" -lt 0 ];then uv400=$(($uv400*(-1)));else uv400=0;fi
@@ -367,10 +371,10 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
     if /sbin/busybox [ "$uv100" -lt 0 ];then uv100=$(($uv100*(-1)));else uv100=0;fi
 fi
 
-echo "CPU: values after parsing: $uv1000, $uv800, $uv400, $uv200, $uv100"
+echo "CPU: values after parsing: $uv1200, $uv1000, $uv800, $uv400, $uv200, $uv100"
 if /sbin/busybox [ "$uvatboot" == "true" ];then
     echo "CPU: UV at boot enabled, setting values now..."
-    echo $uv1000 $uv800 $uv400 $uv200 $uv100 > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+    echo $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 fi;
 echo -n "CPU: Check governor: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 echo -n "CPU: Check max frequency: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -380,17 +384,27 @@ echo -n "CPU: Check UV values: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_
 # IO
 #--------------------------------------------------------------------
 echo
-echo "IO: setting sdcard READ_AHEAD..."
+echo "IO: setting default sdcard readahead 1024Kb..."
 echo "1024" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
 echo "1024" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
+if /sbin/busybox [ ! -z "$readahead" ];then
+    echo "IO: checking user configured sdcard READ_AHEAD..."
+    if /sbin/busybox [[ "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512 || "$readahead" -eq 1024 || "$readahead" -eq 2048 || "$readahead" -eq 3072 || "$readahead" -eq 4096 ]];then
+        echo "IO: found vaild sdcard read_ahead: <$readahead>"
+        echo $readahead > /sys/devices/virtual/bdi/179:0/read_ahead_kb
+        echo $readahead > /sys/devices/virtual/bdi/179:8/read_ahead_kb
+    fi
+fi
+
 if /sbin/busybox [ -e /sys/devices/virtual/bdi/default/read_ahead_kb ]; then
     echo "IO: setting default READ_AHEAD..."
     echo "512" > /sys/devices/virtual/bdi/default/read_ahead_kb;
 fi
-echo "IO: setting onenand values..."
-echo "64" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
-echo "64" > /sys/devices/virtual/bdi/138:10/read_ahead_kb
-echo "64" > /sys/devices/virtual/bdi/138:11/read_ahead_kb 
+#echo "IO: setting onenand values..."
+#echo "64" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
+#echo "64" > /sys/devices/virtual/bdi/138:10/read_ahead_kb
+#echo "64" > /sys/devices/virtual/bdi/138:11/read_ahead_kb 
+
 STL=`ls -d /sys/block/stl*`;
 BML=`ls -d /sys/block/bml*`;
 MMC=`ls -d /sys/block/mmc*`;
@@ -421,8 +435,11 @@ do
         echo 1 > $i/queue/iosched/fifo_batch
     fi
 done;
-echo -n "IO: check READ_AHEAD 179.0: "; cat /sys/devices/virtual/bdi/179:0/read_ahead_kb
-echo -n "IO: check READ_AHEAD 179.8: "; cat /sys/devices/virtual/bdi/179:8/read_ahead_kb
+echo -n "IO: check read_ahead 179.0: "; cat /sys/devices/virtual/bdi/179:0/read_ahead_kb
+echo -n "IO: check read_ahead 179.8: "; cat /sys/devices/virtual/bdi/179:8/read_ahead_kb
+echo -n "IO: check /system read_ahead: "; cat /sys/block/stl9/queue/read_ahead_kb
+echo -n "IO: check /dbdata read_ahead: "; cat /sys/block/stl10/queue/read_ahead_kb
+echo -n "IO: check /cache read_ahead: "; cat /sys/block/stl11/queue/read_ahead_kb
 echo -n "IO: Recheck scheduler: "; cat /sys/block/stl10/queue/scheduler
 echo -n "IO: Recheck rotational: "; cat /sys/block/stl10/queue/rotational
 echo -n "IO: Recheck iostats: "; cat /sys/block/stl10/queue/iostats
@@ -548,6 +565,9 @@ if /sbin/busybox [ "$initd" == "true" ];then
     echo -n "CPU: Check UV values: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
     echo -n "IO: check READ_AHEAD 179.0: "; cat /sys/devices/virtual/bdi/179:0/read_ahead_kb
     echo -n "IO: check READ_AHEAD 179.8: "; cat /sys/devices/virtual/bdi/179:8/read_ahead_kb
+    echo -n "IO: check /system read_ahead: "; cat /sys/block/stl9/queue/read_ahead_kb
+    echo -n "IO: check /dbdata read_ahead: "; cat /sys/block/stl10/queue/read_ahead_kb
+    echo -n "IO: check /cache read_ahead: "; cat /sys/block/stl11/queue/read_ahead_kb
     echo -n "IO: Recheck scheduler: "; cat /sys/block/stl10/queue/scheduler
     echo -n "IO: Recheck rotational: "; cat /sys/block/stl10/queue/rotational
     echo -n "IO: Recheck iostats: "; cat /sys/block/stl10/queue/iostats
