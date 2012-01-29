@@ -55,6 +55,9 @@ else
 fi
 
 # install MidnightControl.apk
+#echo "rm old MidnightControl apk's..."
+#/sbin/busybox rm -f /system/app/MidnightControl.apk
+#/sbin/busybox rm -f /data/app/com.mialwe.midnight.control-1.apk
 echo "installing /system/app/MidnightControl.apk"
 /sbin/busybox cat /res/misc/MidnightControl.apk > /system/app/MidnightControl.apk
 /sbin/busybox chown 0.0 /system/app/MidnightControl.apk
