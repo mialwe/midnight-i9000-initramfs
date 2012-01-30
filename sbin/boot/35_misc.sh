@@ -384,26 +384,25 @@ echo -n "CPU: Check UV values: ";cat /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_
 # IO
 #--------------------------------------------------------------------
 echo
-echo "IO: setting default sdcard readahead 1024Kb..."
-echo "1024" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
-echo "1024" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
+if /sbin/busybox [ -e /sys/devices/virtual/bdi/default/read_ahead_kb ]; then
+    echo "IO: setting default READ_AHEAD for newly created devices..."
+    echo "128" > /sys/devices/virtual/bdi/default/read_ahead_kb;
+fi
+echo "IO: setting default sdcard readahead 128Kb..."
+echo "128" > /sys/devices/virtual/bdi/179:0/read_ahead_kb
+echo "128" > /sys/devices/virtual/bdi/179:8/read_ahead_kb
 if /sbin/busybox [ ! -z "$readahead" ];then
     echo "IO: checking user configured sdcard READ_AHEAD..."
-    if /sbin/busybox [[ "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512 || "$readahead" -eq 1024 || "$readahead" -eq 2048 || "$readahead" -eq 3072 || "$readahead" -eq 4096 ]];then
+    if /sbin/busybox [[ "$readahead" -eq 32 || "$readahead" -eq 64 || "$readahead" -eq 128 || "$readahead" -eq 256 || "$readahead" -eq 512 || "$readahead" -eq 1024 || "$readahead" -eq 2048 ]];then
         echo "IO: found vaild sdcard read_ahead: <$readahead>"
         echo $readahead > /sys/devices/virtual/bdi/179:0/read_ahead_kb
         echo $readahead > /sys/devices/virtual/bdi/179:8/read_ahead_kb
     fi
 fi
-
-if /sbin/busybox [ -e /sys/devices/virtual/bdi/default/read_ahead_kb ]; then
-    echo "IO: setting default READ_AHEAD..."
-    echo "512" > /sys/devices/virtual/bdi/default/read_ahead_kb;
-fi
-#echo "IO: setting onenand values..."
-#echo "64" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
-#echo "64" > /sys/devices/virtual/bdi/138:10/read_ahead_kb
-#echo "64" > /sys/devices/virtual/bdi/138:11/read_ahead_kb 
+echo "IO: setting readahead for /system, /dbdata, /cache..."
+echo "16" > /sys/devices/virtual/bdi/138:9/read_ahead_kb
+echo "128" > /sys/devices/virtual/bdi/138:10/read_ahead_kb
+echo "16" > /sys/devices/virtual/bdi/138:11/read_ahead_kb 
 
 STL=`ls -d /sys/block/stl*`;
 BML=`ls -d /sys/block/bml*`;
@@ -470,6 +469,8 @@ cat /proc/meminfo|grep ^Cached
 echo
 echo "INIT.D: starting..."
 # init.d support 
+# executes <E>scriptname, <S>scriptname, <0-9><0-9>scriptname
+# in this order.
 if /sbin/busybox [ "$initd" == "true" ];then
     echo $(date) USER EARLY INIT START from /system/etc/init.d
     if cd /system/etc/init.d >/dev/null 2>&1 ; then
@@ -503,6 +504,8 @@ if /sbin/busybox [ "$initd" == "true" ];then
         done
     fi
     echo $(date) USER INIT DONE from /system/etc/init.d
+    
+    # recheck what all those init.d scripts changed...
     echo
     echo "LOG: VALUES *AFTER* INIT.D EXECUTION:"
     echo "MOUNT: Check mounted partitions: "
