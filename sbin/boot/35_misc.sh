@@ -216,7 +216,6 @@ echo -n "VM: check vm/overcommit_memory: ";cat /proc/sys/vm/overcommit_memory
 #--------------------------------------------------------------------
 echo
 echo "SETPROP: setting prop tweaks..."
-setprop debug.sf.hw 1
 setprop debug.sf.nobootanimation 0;
 setprop wifi.supplicant_scan_interval 180
 setprop windowsmgr.max_events_per_sec 76;
@@ -224,9 +223,15 @@ setprop ro.ril.disable.power.collapse 1;
 setprop ro.telephony.call_ring.delay 1000;
 setprop mot.proximity.delay 150;
 setprop ro.mot.eri.losalert.delay 1000;
-setprop debug.performance.tuning 1
-setprop video.accelerate.hw 1
-echo -n "PROP: debug.sf.hw: ";getprop debug.sf.hw
+
+# disabled 2012/02/04, testing...
+#setprop debug.sf.hw 1
+#setprop debug.performance.tuning 1
+#setprop video.accelerate.hw 1
+#echo -n "PROP: debug.sf.hw: ";getprop debug.sf.hw
+#echo -n "PROP: debug.performance.tuning: ";getprop debug.performance.tuning
+#echo -n "PROP: video.accelerate.hw: ";getprop video.accelerate.hw
+
 echo -n "PROP: debug.sf.nobootanimation: ";getprop debug.sf.nobootanimation
 echo -n "PROP: wifi.supplicant_scan_interval: ";getprop wifi.supplicant_scan_interval
 echo -n "PROP: windowsmgr.max_events_per_sec: ";getprop windowsmgr.max_events_per_sec
@@ -234,8 +239,6 @@ echo -n "PROP: ro.ril.disable.power.collapse: ";getprop ro.ril.disable.power.col
 echo -n "PROP: ro.telephony.call_ring.delay: ";getprop ro.telephony.call_ring.delay
 echo -n "PROP: mot.proximity.delay: ";getprop mot.proximity.delay
 echo -n "PROP: ro.mot.eri.losalert.delay: ";getprop ro.mot.eri.losalert.delay
-echo -n "PROP: debug.performance.tuning: ";getprop debug.performance.tuning
-echo -n "PROP: video.accelerate.hw: ";getprop video.accelerate.hw
 
 #--------------------------------------------------------------------
 # KERNEL/SCHED
@@ -244,19 +247,29 @@ echo
 echo "KERNEL: setting kernel tweaks..."
 echo "NO_GENTLE_FAIR_SLEEPERS" > /sys/kernel/debug/sched_features
 echo 500 512000 64 2048 > /proc/sys/kernel/sem 
-echo 400000 > /proc/sys/kernel/sched_latency_ns
-echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns
-echo 200000 > /proc/sys/kernel/sched_min_granularity_ns
-# readded 2012/01/01, used before, testing again, by Pikachu01
-#echo 1000000 > /proc/sys/kernel/sched_latency_ns
+
+echo 3000000 > /proc/sys/kernel/sched_latency_ns
+echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
+echo 500000 > /proc/sys/kernel/sched_min_granularity_ns
+
+# Midnight 0.7.6
+#echo 100000 > /proc/sys/kernel/sched_latency_ns
+#echo 500000 > /proc/sys/kernel/sched_wakeup_granularity_ns
+#echo 750000 > /proc/sys/kernel/sched_min_granularity_ns
+        
+# pikachu01/Thunderbolt aggressive, performance
+#echo 400000 > /proc/sys/kernel/sched_latency_ns
 #echo 100000 > /proc/sys/kernel/sched_wakeup_granularity_ns
-#echo 500000 > /proc/sys/kernel/sched_min_granularity_ns
+#echo 200000 > /proc/sys/kernel/sched_min_granularity_ns
+
 echo 0 > /proc/sys/kernel/panic_on_oops
 echo 0 > /proc/sys/kernel/panic
+
 # have to re-check those...
 #echo 2048 > /proc/sys/kernel/msgmni 
 #echo 64000 > /proc/sys/kernel/msgmax
 #echo 268435456 > /proc/sys/kernel/shmmax
+
 echo -n "KERNEL: check sched_latency_ns: ";cat /proc/sys/kernel/sched_latency_ns
 echo -n "KERNEL: check sched_wakeup_granularity_ns: "; cat /proc/sys/kernel/sched_wakeup_granularity_ns
 echo -n "KERNEL: check sched_min_granularity_ns: ";cat /proc/sys/kernel/sched_min_granularity_ns
