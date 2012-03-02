@@ -1,5 +1,5 @@
 #initialize cpu
-uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;uv1200=0;cpumax=1000000;
+uv100=0;uv200=0;uv400=0;uv800=0;uv1000=0;uv1128=0;uv1200=0;cpumax=1000000;
 
 # app settings parsing
 if /sbin/busybox [ ! -f /cache/midnight_block ];then
@@ -16,12 +16,15 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
         echo "APP: cpugov -> $cpugov"
         uvatboot=`/sbin/busybox awk -F"\"" ' /c_toggle_uv_boot\"/ {print $4}' $xmlfile`
         uv1200=`/sbin/busybox awk -F"\"" ' /uv_1200\"/ {print $4}' $xmlfile`;#uv1200=$(($uv1200*(-1)))
+        uv1128=`/sbin/busybox awk -F"\"" ' /uv_1128\"/ {print $4}' $xmlfile`;#uv1128=$(($uv1128*(-1)))
         uv1000=`/sbin/busybox awk -F"\"" ' /uv_1000\"/ {print $4}' $xmlfile`;#uv1000=$(($uv1000*(-1)))
         uv800=`/sbin/busybox awk -F"\"" ' /uv_800\"/ {print $4}' $xmlfile`;#uv800=$(($uv800*(-1)))
         uv400=`/sbin/busybox awk -F"\"" ' /uv_400\"/ {print $4}' $xmlfile`;#uv400=$(($uv400*(-1)))
         uv200=`/sbin/busybox awk -F"\"" ' /uv_200\"/ {print $4}' $xmlfile`;#uv200=$(($uv200*(-1)))
         uv100=`/sbin/busybox awk -F"\"" ' /uv_100\"/ {print $4}' $xmlfile`;#uv100=$(($uv100*(-1)))
         echo "APP: uv at boot -> $uvatboot"
+        echo "APP: uv1200 -> $uv1200"
+        echo "APP: uv1128 -> $uv1128"
         echo "APP: uv1000 -> $uv1000"
         echo "APP: uv800  -> $uv800"
         echo "APP: uv400  -> $uv400"
@@ -57,6 +60,8 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
         echo "APP: LMK -> $lmk"
         readahead=`/sbin/busybox sed -n 's|<string name=\"midnight_rh\">\(.*\)</string>|\1|p' $xmlfile`
         echo "APP: readahead -> $readahead"
+        timeout=`/sbin/busybox awk -F"\"" ' /midnight_led_timeout\"/ {print $4}' $xmlfile`
+        echo "APP: LED timeout -> $timeout"
     else
         echo "APP: preferences file not found."
     fi
@@ -140,18 +145,22 @@ if /sbin/busybox [ "$lmk" == "SGSGINGERBREAD" ];then
     # SGS GB STOCK: 
     ADJ0=2560;ADJ1=4096;ADJ2=6144;ADJ7=10240;ADJ14=11264;ADJ15=12288
     echo "LMK: using preset SGS-GINGERBREAD"
+elif /sbin/busybox [ "$lmk" == "MODERATE" ];then
+    # MODERATE (56Mb): 
+    ADJ0=1536;ADJ1=2304;ADJ2=5120;ADJ7=8192;ADJ14=11264;ADJ15=14336
+    echo "LMK: using preset MODERATE"
 elif /sbin/busybox [ "$lmk" == "NEXUS" ];then
     # NEXUS: 
     ADJ0=2048;ADJ1=3072;ADJ2=4096;ADJ7=6144;ADJ14=7168;ADJ15=8192
     echo "LMK: using preset NEXUS"
-elif /sbin/busybox [ "$lmk" == "AGRESSIVE1" ];then
+elif /sbin/busybox [ "$lmk" == "AGGRESSIVE1" ];then
     # MORE RAM
     ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=14080;ADJ14=15360;ADJ15=17920
-    echo "LMK: using preset AGRESSIVE1"
-elif /sbin/busybox [ "$lmk" == "AGRESSIVE2" ];then
+    echo "LMK: using preset AGGRESSIVE1"
+elif /sbin/busybox [ "$lmk" == "AGGRESSIVE2" ];then
     # BIGRAM: 
     ADJ0=2048;ADJ1=4096;ADJ2=11776;ADJ7=15872;ADJ14=18944;ADJ15=21760
-    echo "LMK: using preset AGRESSIVE2"
+    echo "LMK: using preset AGGRESSIVE2"
 else
     echo "LMK: using MIDNIGHT default preset"
 fi
@@ -365,7 +374,7 @@ fi
 #--------------------------------------------------------------------
 echo
 echo "CPU: applying CPU settings..."
-if /sbin/busybox [[ "$cpumax" -eq 1200000 || "$cpumax" -eq 1000000 || "$cpumax" -eq 800000  || "$cpumax" -eq 400000 ]];then
+if /sbin/busybox [[ "$cpumax" -eq 1200000 || "$cpumax" -eq 1128000 || "$cpumax" -eq 1000000 || "$cpumax" -eq 800000  || "$cpumax" -eq 400000 ]];then
     echo "CPU: found vaild cpumax: <$cpumax>"
     echo $cpumax > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
 fi
@@ -377,6 +386,7 @@ fi
 
 if /sbin/busybox [ ! -f /cache/midnight_block ];then
     if /sbin/busybox [ "$uv1200" -lt 0 ];then uv1200=$(($uv1200*(-1)));else uv1200=0;fi
+    if /sbin/busybox [ "$uv1128" -lt 0 ];then uv1128=$(($uv1128*(-1)));else uv1128=0;fi
     if /sbin/busybox [ "$uv1000" -lt 0 ];then uv1000=$(($uv1000*(-1)));else uv1000=0;fi
     if /sbin/busybox [ "$uv800" -lt 0 ];then uv800=$(($uv800*(-1)));else uv800=0;fi
     if /sbin/busybox [ "$uv400" -lt 0 ];then uv400=$(($uv400*(-1)));else uv400=0;fi
@@ -384,10 +394,10 @@ if /sbin/busybox [ ! -f /cache/midnight_block ];then
     if /sbin/busybox [ "$uv100" -lt 0 ];then uv100=$(($uv100*(-1)));else uv100=0;fi
 fi
 
-echo "CPU: values after parsing: $uv1200, $uv1000, $uv800, $uv400, $uv200, $uv100"
+echo "CPU: values after parsing: $uv1200, $uv1128, $uv1000, $uv800, $uv400, $uv200, $uv100"
 if /sbin/busybox [ "$uvatboot" == "true" ];then
     echo "CPU: UV at boot enabled, setting values now..."
-    echo $uv1200 $uv1000 $uv800 $uv400 $uv200 $uv100 > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
+    echo $uv1200 $uv1128 $uv1000 $uv800 $uv400 $uv200 $uv100 > /sys/devices/system/cpu/cpu0/cpufreq/UV_mV_table
 fi;
 echo -n "CPU: Check governor: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
 echo -n "CPU: Check max frequency: ";cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
@@ -466,6 +476,14 @@ if /sbin/busybox [ -e /sys/block/stl10/queue/iosched/writes_starved ];then
 fi    
 if /sbin/busybox [ -e /sys/block/stl10/queue/iosched/fifo_batch ];then
     echo -n "IO: Recheck fifo_batch (1): "; cat /sys/block/stl10/queue/iosched/fifo_batch
+fi
+
+echo;echo "LED timeout"
+if /sbin/busybox [ ! -z "$timeout" ];then
+    echo "found valid timeout value, using <$timeout> ms";
+    echo $timeout > /sys/class/misc/backlightnotification/timeout
+else
+    echo -n "using default ms, ";cat /sys/class/misc/backlightnotification/timeout
 fi
 #--------------------------------------------------------------------
 # MISC LOG
